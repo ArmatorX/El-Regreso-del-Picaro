@@ -2,10 +2,20 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/**
+ * <summary>
+ * Esta clase es una abstracción de todas las entidades del juego.
+ * </summary>
+ * <remarks>
+ * Contiene métodos y atributos que son comunes tanto a los enemigos como al personaje.
+ * </remarks>
+ */
 public abstract class Entidad : MonoBehaviour
 {
     // Atributos
+    /// <value>El casillero en el que se encuentra ubicada la entidad.</value>
     private Piso ubicación;
+    /// <value>Los puntos de vida restantes de la entidad.</value>
     private int vidaActual;
 
     // Métodos
@@ -18,8 +28,10 @@ public abstract class Entidad : MonoBehaviour
     public int VidaActual { get => vidaActual; set => vidaActual = value; }
 
     /**
+     * <summary>
      * Se encarga de mover a la entidad en una dirección determinada.
-     * @param dirección - La dirección en que se quiere mover la entidad.
+     * </summary>
+     * <param name="dirección">La dirección en que se quiere mover la entidad.</param> 
      */
     public abstract void moverse(Vector3 dirección);
 }

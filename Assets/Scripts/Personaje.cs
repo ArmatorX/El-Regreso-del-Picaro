@@ -3,17 +3,35 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+/**
+ * <summary>
+ * Representa al personaje.
+ * </summary>
+ * <remarks>
+ * Se encarga de realizar todas las acciones del personaje, y gestionar todos los atributos relacionados al mismo.
+ * </remarks>
+ */
 public class Personaje : Entidad
 {
     // Constantes
-    private static int COMIDA_MOVIMIENTO = 30;
+    private int COMIDA_MOVIMIENTO = 30;
 
     // Atributos
+    /// <value>El nombre que se le colocó al personaje.</value>
     private string nombre;
+    /// <value>Se usa para gestionar cambios en la vida máxima dinámicamente.</value>
+    /// <remarks>
+    /// De momento, se usa solamente para cuando el vampiro reduce la vida del personaje. 
+    /// Esto evita tener que modificar las estadísticas de un nivel determinado, y garantiza
+    /// que el efecto perdure incluso después de cambios de nivel.
+    /// </remarks>
     private int modificadorVidaMáxima;
+    /// <value>Puntos de comida actuales del personaje.</value>
     private int comidaActual;
+    /// <value>Puntos de experiencia actuales del personaje.</value>
     private int experienciaActual;
     //private Nivel nivel;
+    /// <value>Lista de estados en los que se encuentra actualmente el personaje.</value>
     private List<EstadoPersonaje> estados;
 
     // Métodos
@@ -32,9 +50,11 @@ public class Personaje : Entidad
     public List<EstadoPersonaje> Estados { get => estados; set => estados = value; }
 
     /**
+     * <summary>
      * Obtiene los estados actuales del personaje y devuelve sus respectivos nombres en
      * una lista de strings.
-     * @returns - Lista con los nombres de los estados actuales del personaje.
+     * </summary>
+     * <returns>Lista con los nombres de los estados actuales del personaje.</returns> 
      */
     public List<string> obtenerEstados()
     {
@@ -53,10 +73,12 @@ public class Personaje : Entidad
     }
 
     /**
+     * <summary>
      * Mueve al personaje en una dirección determinada.
      * Se encarga de gestionar todas las tareas del movimientod del personaje,
      * como restar puntos de comida, mostrar la animación, cambiar la ubicación, etc.
-     * @param dirección - La dirección en la que se quiere mover el personaje.
+     * </summary>
+     * <param name="dirección">La dirección en la que se quiere mover el personaje.</param>
      */
     public override void moverse(Vector3 dirección)
     {
@@ -74,8 +96,10 @@ public class Personaje : Entidad
     }
 
     /**
+     * <summary>
      * Consume una determinada cantidad de puntos de comida del personaje.
-     * @param comimda - La cantidad de puntos de comida a consumir.
+     * </summary>
+     * <param name="comimda">La cantidad de puntos de comida a consumir.</param> 
      */
     private void consumirComida(int comida)
     {
