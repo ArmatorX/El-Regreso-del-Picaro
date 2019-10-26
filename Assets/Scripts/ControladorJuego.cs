@@ -59,10 +59,12 @@ public class ControladorJuego : MonoBehaviour {
     
 
     // Métodos
+    /*
     public ControladorJuego(PantallaJuego pantalla)
     {
         this.pantalla = pantalla;
     }
+    */
     public PantallaJuego Pantalla { get => pantalla; set => pantalla = value; }
     public string EstadoPersonajeCongelado { get => estadoPersonajeCongelado; set => estadoPersonajeCongelado = value; }
     public string EstadoPersonajeConfundido { get => estadoPersonajeConfundido; set => estadoPersonajeConfundido = value; }
@@ -233,7 +235,7 @@ public class ControladorJuego : MonoBehaviour {
     {
         Persistencia.CrearArchivoConTodosLosEstados();        
     }
-
+    /*
     // Use this for initialization
     void Start () {
         // Inicializo cicloTurno en el turno del personaje.

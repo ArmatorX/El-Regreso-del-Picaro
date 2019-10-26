@@ -14,7 +14,7 @@ using UnityEngine;
 public class Personaje : Entidad
 {
     // Constantes
-    private int COMIDA_MOVIMIENTO = 30;
+    private int COMIDA_MOVIMIENTO = 5;
 
     // Atributos
     /// <value>El nombre que se le colocó al personaje.</value>
@@ -101,9 +101,19 @@ public class Personaje : Entidad
      * </summary>
      * <param name="comimda">La cantidad de puntos de comida a consumir.</param> 
      */
-    private void consumirComida(int comida)
+    public void consumirComida(int comida)
     {
-        ComidaActual -= comida;
+        if (comida > 0)
+        {
+            if (ComidaActual >= comida)
+            {
+                ComidaActual -= comida;
+            }
+            else
+            {
+                ComidaActual = 0;
+            }
+        }
     }
 
     // Start is called before the first frame update
