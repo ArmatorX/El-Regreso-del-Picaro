@@ -113,14 +113,14 @@ public class ControladorJuego : MonoBehaviour {
                         Personaje.moverse(dirección);
 
                         // Actualizar visibilidad del mapa.
-                        actualizarVisibilidadDelMapa();
+                        //actualizarVisibilidadDelMapa();
                     }
                 }
             }
         }
     }
 
-    private void actualizarVisibilidadDelMapa()
+    public void actualizarVisibilidadDelMapa()
     {
         throw new NotImplementedException();
     }
@@ -132,17 +132,20 @@ public class ControladorJuego : MonoBehaviour {
      */
     public void obtenerEstadoPersonajeCongelado()
     {
-        // Busco en los archivos locales todos los estados del personaje.
-        List<EstadoPersonaje> todosLosEstados = Persistencia.ReadFromBinaryFile<List<EstadoPersonaje>>(RUTA_ESTADOS_PERSONAJE);
-
-        // Recorro todos los estados hasta encontrar el estado "Congelado".
-        foreach (EstadoPersonaje estado in todosLosEstados)
+        if (EstadoPersonajeCongelado == null)
         {
-            if (estado.esEstadoCongelado())
+            // Busco en los archivos locales todos los estados del personaje.
+            List<EstadoPersonaje> todosLosEstados = Persistencia.ReadFromBinaryFile<List<EstadoPersonaje>>(RUTA_ESTADOS_PERSONAJE);
+
+            // Recorro todos los estados hasta encontrar el estado "Congelado".
+            foreach (EstadoPersonaje estado in todosLosEstados)
             {
-                // Obtengo y guardo el nombre del estado.
-                EstadoPersonajeCongelado = estado.Nombre;
-                break;
+                if (estado.esEstadoCongelado())
+                {
+                    // Obtengo y guardo el nombre del estado.
+                    EstadoPersonajeCongelado = estado.Nombre;
+                    break;
+                }
             }
         }
     }
@@ -154,17 +157,20 @@ public class ControladorJuego : MonoBehaviour {
      */
     public void obtenerEstadoPersonajeConfundido()
     {
-        // Busco en los archivos locales todos los estados del personaje.
-        List<EstadoPersonaje> todosLosEstados = Persistencia.ReadFromBinaryFile<List<EstadoPersonaje>>(RUTA_ESTADOS_PERSONAJE);
-
-        // Recorro todos los estados hasta encontrar el estado "Confundido".
-        foreach (EstadoPersonaje estado in todosLosEstados)
+        if (EstadoPersonajeConfundido == null)
         {
-            if (estado.esEstadoConfundido())
+            // Busco en los archivos locales todos los estados del personaje.
+            List<EstadoPersonaje> todosLosEstados = Persistencia.ReadFromBinaryFile<List<EstadoPersonaje>>(RUTA_ESTADOS_PERSONAJE);
+
+            // Recorro todos los estados hasta encontrar el estado "Confundido".
+            foreach (EstadoPersonaje estado in todosLosEstados)
             {
-                // Obtengo y guardo el nombre del estado.
-                EstadoPersonajeConfundido = estado.Nombre;
-                break;
+                if (estado.esEstadoConfundido())
+                {
+                    // Obtengo y guardo el nombre del estado.
+                    EstadoPersonajeConfundido = estado.Nombre;
+                    break;
+                }
             }
         }
     }
@@ -176,17 +182,20 @@ public class ControladorJuego : MonoBehaviour {
      */
     public void obtenerEstadoPersonajeParalizado()
     {
-        // Busco en los archivos locales todos los estados del personaje.
-        List<EstadoPersonaje> todosLosEstados = Persistencia.ReadFromBinaryFile<List<EstadoPersonaje>>(RUTA_ESTADOS_PERSONAJE);
-
-        // Recorro todos los estados hasta encontrar el estado "Paralizado".
-        foreach (EstadoPersonaje estado in todosLosEstados)
+        if (EstadoPersonajeParalizado == null)
         {
-            if (estado.esEstadoParalizado())
+            // Busco en los archivos locales todos los estados del personaje.
+            List<EstadoPersonaje> todosLosEstados = Persistencia.ReadFromBinaryFile<List<EstadoPersonaje>>(RUTA_ESTADOS_PERSONAJE);
+
+            // Recorro todos los estados hasta encontrar el estado "Paralizado".
+            foreach (EstadoPersonaje estado in todosLosEstados)
             {
-                // Obtengo y guardo el nombre del estado.
-                EstadoPersonajeParalizado = estado.Nombre;
-                break;
+                if (estado.esEstadoParalizado())
+                {
+                    // Obtengo y guardo el nombre del estado.
+                    EstadoPersonajeParalizado = estado.Nombre;
+                    break;
+                }
             }
         }
     }
@@ -228,6 +237,13 @@ public class ControladorJuego : MonoBehaviour {
             return false;
         }
         return true;
+    }
+
+    public void Start()
+    {
+        // Inicializo la pantalla
+        pantalla = GameObject.Find("PantallaJuego").GetComponent<PantallaJuego>();
+        personaje = GameObject.Find("Personaje").GetComponent<Personaje>();
     }
 
     /*

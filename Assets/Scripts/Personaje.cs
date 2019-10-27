@@ -14,7 +14,9 @@ using UnityEngine;
 public class Personaje : Entidad
 {
     // Constantes
-    private int COMIDA_MOVIMIENTO = 5;
+    private static int COMIDA_MOVIMIENTO = 5;
+    private static float TIEMPO_MOVIMIENTO = 0.1f;
+    private static float TIEMPO_INVERSO_MOVIMIENTO = 1f / TIEMPO_MOVIMIENTO;
 
     // Atributos
     /// <value>El nombre que se le colocó al personaje.</value>
@@ -34,6 +36,10 @@ public class Personaje : Entidad
     /// <value>Lista de estados en los que se encuentra actualmente el personaje.</value>
     private List<EstadoPersonaje> estados;
 
+    // Físicas
+    private Rigidbody2D rigidBody2D;
+    private bool seEstáMoviendo;
+
     // Métodos
     public Personaje(Piso ubicación, int vidaActual, string nombre, int modificadorVidaMáxima, int comidaActual, int experienciaActual, List<EstadoPersonaje> estados) : base(ubicación, vidaActual)
     {
@@ -44,7 +50,7 @@ public class Personaje : Entidad
         this.estados = estados;
     }
     public string Nombre { get => nombre; set => nombre = value; }
-    public int ModificadorVidaMáxima1 { get => modificadorVidaMáxima; set => modificadorVidaMáxima = value; }
+    public int ModificadorVidaMáxima { get => modificadorVidaMáxima; set => modificadorVidaMáxima = value; }
     public int ComidaActual { get => comidaActual; set => comidaActual = value; }
     public int ExperienciaActual { get => experienciaActual; set => experienciaActual = value; }
     public List<EstadoPersonaje> Estados { get => estados; set => estados = value; }
@@ -88,11 +94,69 @@ public class Personaje : Entidad
         // Muestro la animación del movimiento del personaje.
         // controlador.mostrarAnimaciónMovimientoPersonaje();
 
+        // Cambio la posición del personaje en Unity.
+        IEnumerator corrutina = movimientoSuavizado(dirección);
+
+        StartCoroutine(corrutina);
+
         // Obtengo el casillero de destino.
         // Piso casilleroDestino = controlador.obtenerCasilleroDestino(Ubicación, dirección);
 
         // Actualizo la ubicación del personaje.
         // Ubicación = casilleroDestino;
+    }
+
+    /**
+     * <summary>
+     * Cambia la posición del personaje poco a poco, hasta que llega al destino.
+     * </summary>
+     * <param name="dirección">La dirección en que se quiere mover el personaje.</param>
+     * <returns>Es un IEnumerator porque es una corrutina.</returns>
+     */
+    protected IEnumerator movimientoSuavizado(Vector3 dirección)
+    {
+        if (seEstáMoviendo)
+        {
+            // Si se está moviendo que espere hasta que termine.
+            yield return new WaitForSeconds(TIEMPO_MOVIMIENTO / 4);
+
+            // Intenta moverte nuevamente.
+            IEnumerator corrutina = movimientoSuavizado(dirección);
+
+            StartCoroutine(corrutina);
+        }
+        else
+        {
+            // Obtengo la posición de destino.
+            Vector3 destino = this.transform.position + dirección;
+
+            // Calculo la distancia restante.
+            float distanciaRestante = (this.transform.position - destino).sqrMagnitude;
+
+            while (distanciaRestante > float.Epsilon)
+            {
+                // Deshabilito el movimiento.
+                seEstáMoviendo = true;
+
+                // Calculo la nueva posición a la que se va a mover el personaje.
+                Vector3 nuevaPosición = Vector3.MoveTowards(rigidBody2D.position, destino, TIEMPO_INVERSO_MOVIMIENTO * Time.deltaTime);
+
+                // Muevo el personaje a la posición calculada.
+                rigidBody2D.MovePosition(nuevaPosición);
+
+                // Vuelvo a calcular la distancia restante.
+                distanciaRestante = (this.transform.position - destino).sqrMagnitude;
+
+                // Salta un frame, y continúa el loop hasta que está en un valor cercano a la posición de destino.
+                yield return null;
+            }
+
+            // Pongo la posición del personaje en el lugar de destino.
+            rigidBody2D.MovePosition(destino);
+
+            // Habilito nuevamente el movimiento.
+            seEstáMoviendo = false;
+        }
     }
 
     /**
@@ -103,8 +167,10 @@ public class Personaje : Entidad
      */
     public void consumirComida(int comida)
     {
+        // Controla que la comida a consumir no sea negativa.
         if (comida > 0)
         {
+            // Controla que no consuma más comida de la que tiene el personaje.
             if (ComidaActual >= comida)
             {
                 ComidaActual -= comida;
@@ -119,7 +185,19 @@ public class Personaje : Entidad
     // Start is called before the first frame update
     void Start()
     {
+        // Inicializo los atributos
+        rigidBody2D = GetComponent<Rigidbody2D>();
 
+        ModificadorVidaMáxima = 0;
+        ComidaActual = 100;
+        ExperienciaActual = 0;
+        Estados = new List<EstadoPersonaje>();
+        Estados.Add(new EstadoPersonaje("Normal"));
+
+        Ubicación = new Piso(this.transform.position);
+        VidaActual = 100;
+
+        seEstáMoviendo = false;
     }
 
     // Update is called once per frame
