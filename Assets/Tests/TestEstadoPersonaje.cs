@@ -25,9 +25,9 @@ namespace Tests
         [SetUp]
         protected void SetUp()
         {
-            congelado = new EstadoPersonaje("Congelado");
-            confundido = new EstadoPersonaje("Confundido");
-            paralizado = new EstadoPersonaje("Paralizado");
+            congelado = new EstadoPersonaje(EstadosPersonaje.CONGELADO);
+            confundido = new EstadoPersonaje(EstadosPersonaje.CONFUNDIDO);
+            paralizado = new EstadoPersonaje(EstadosPersonaje.PARALIZADO);
         }
 
         /**

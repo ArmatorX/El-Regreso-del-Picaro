@@ -14,6 +14,7 @@ public class ControladorJuego : MonoBehaviour {
     // Constantes
     // TODO: Armar un archivo de configuración para las rutas de acceso.
     public static string RUTA_ESTADOS_PERSONAJE = "Datos/EstadoPersonaje.bin";
+    private static int CAPA_ENTIDADES = 8;
     /**
      * <summary>
      * El enum <c>CicloTurno</c> representa el ciclo que reliza el juego cada vez que pasa una ronda completa de turnos (asalto).
@@ -38,14 +39,6 @@ public class ControladorJuego : MonoBehaviour {
     // Atributos
     /// <value>La pantalla del juego.</value>
     private PantallaJuego pantalla;
-    /// <value>El nombre del estado "Congelado".</value>
-    private string estadoPersonajeCongelado;
-    /// <value>El nombre del estado "Confundido".</value>
-    private string estadoPersonajeConfundido;
-    /// <value>El nombre del estado "Paralizado".</value>
-    private string estadoPersonajeParalizado;
-    /// <value>Los estados actuales del personaje.</value>
-    private List<string> estadosPersonaje;
     /// <value>La dirección en que se quiere mover el jugador.</value>
     private Vector3 direcciónMovimiento;
     /// <value>El personaje que está jugando.</value>
@@ -56,6 +49,8 @@ public class ControladorJuego : MonoBehaviour {
     /// El cicloTurno nos muestra el momento del asalto en que está el ControladorJuego.
     /// </remarks>
     private CicloTurno cicloTurno;
+    private Enemigo objetivoActual;
+    private Dado d20;
     
 
     // Métodos
@@ -66,13 +61,16 @@ public class ControladorJuego : MonoBehaviour {
     }
     */
     public PantallaJuego Pantalla { get => pantalla; set => pantalla = value; }
-    public string EstadoPersonajeCongelado { get => estadoPersonajeCongelado; set => estadoPersonajeCongelado = value; }
-    public string EstadoPersonajeConfundido { get => estadoPersonajeConfundido; set => estadoPersonajeConfundido = value; }
-    public string EstadoPersonajeParalizado { get => estadoPersonajeParalizado; set => estadoPersonajeParalizado = value; }
-    public List<string> EstadosPersonaje { get => estadosPersonaje; set => estadosPersonaje = value; }
     public Vector3 DirecciónMovimiento { get => direcciónMovimiento; set => direcciónMovimiento = value; }
     // TODO: Hacer que el get verifique si la propiedad es nula.
     public Personaje Personaje { get => personaje; set => personaje = value; }
+    public Enemigo ObjetivoActual { get => objetivoActual; set => objetivoActual = value; }
+    public Dado D20 { get => d20; set => d20 = value; }
+
+    public void mostrarAnimaciónMovimientoPersonaje(Vector3 dirección)
+    {
+        pantalla.mostrarAnimaciónMovimientoPersonaje(dirección);
+    }
 
     /**
      * <summary>
@@ -82,42 +80,81 @@ public class ControladorJuego : MonoBehaviour {
      */
     public void moverPersonaje(Vector3 dirección)
     {
-        // Guardo la dirección del movimiento en la propiedad del controlador.
         DirecciónMovimiento = dirección;
-
-        // Obtener estado congelado.
-        obtenerEstadoPersonajeCongelado();
-
-        // Obtener los estados en los que se encuentra el personaje.
-        obtenerEstadosPersonaje();
-
-        // Verificar si el personaje está en estado congelado.
-        if (!verificarSiPersonajeEstáEnEstado(EstadoPersonajeCongelado))
+        
+        if (!verificarSiPersonajeEstáEnEstado(EstadosPersonaje.CONGELADO))
         {
-            // Obtener estado confundido.
-            obtenerEstadoPersonajeConfundido();
-
-            // Verificar si el personaje está en estado confundido.
-            if (!verificarSiPersonajeEstáEnEstado(EstadoPersonajeConfundido))
+            if (!verificarSiPersonajeEstáEnEstado(EstadosPersonaje.CONFUNDIDO))
             {
-                // Verificar si el camino está obstruido.
-                if (!verificarSiElCaminoEstáObstruido(dirección))
+                if (!verificarSiPersonajeEstáEnEstado(EstadosPersonaje.PARALIZADO))
                 {
-                    // Obtener estado paralizado.
-                    obtenerEstadoPersonajeParalizado();
-
-                    // Verificar si el personaje está en estado paralizado.
-                    if (!verificarSiPersonajeEstáEnEstado(EstadoPersonajeParalizado))
+                    if (!verificarSiElCaminoEstáObstruido(dirección))
                     {
                         // Mover personaje.
                         Personaje.moverse(dirección);
 
                         // Actualizar visibilidad del mapa.
                         //actualizarVisibilidadDelMapa();
+                    } else if (verificarSiObstruidoPorEnemigo(dirección))
+                    {
+                        obtenerEnemigoEnDirecciónMovimiento(dirección);
+
+                        if (!verificarSiEnemigoEstáEnEstado(EstadosEnemigo.MUERTO))
+                        {
+                            try
+                            {
+                                atacarEnemigoCuerpoACuerpo(dirección);
+                            } catch (Exception e)
+                            {
+                                
+                            }
+                        }
                     }
                 }
             }
         }
+    }
+
+    public void atacarEnemigoCuerpoACuerpo(Vector3 dirección)
+    {
+        if (!verificarSiPersonajeEstáEnEstado(EstadosPersonaje.DÉBIL))
+        {
+            if (!verificarSiPersonajeEstáEnEstado(EstadosPersonaje.CONFUNDIDO))
+            {
+                if (!verificarSiPersonajeEstáEnEstado(EstadosPersonaje.CEGADO))
+                {
+                    if (!verificarSiPersonajeEstáEnEstado(EstadosPersonaje.HAMBRIENTO))
+                    {
+                        if (!verificarSiEnemigoEstáEnEstado(EstadosEnemigo.INVISIBLE))
+                        {
+
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public bool verificarSiEnemigoEstáEnEstado(EstadosEnemigo estado)
+    {
+        return ObjetivoActual.verificarSiEstáEnEstado(estado);
+    }
+
+    public void obtenerEnemigoEnDirecciónMovimiento(Vector3 dirección)
+    {
+        RaycastHit2D hit = Physics2D.Raycast(Personaje.transform.position, dirección, dirección.magnitude);
+        ObjetivoActual = hit.collider.gameObject.GetComponent<Enemigo>();
+    }
+
+    public bool verificarSiObstruidoPorEnemigo(Vector3 dirección)
+    {
+        RaycastHit2D hit = Physics2D.Raycast(Personaje.transform.position, dirección, dirección.magnitude);
+
+        if (hit.collider.tag == "Enemigo")
+        {
+            return true;
+        }
+        return false;
     }
 
     public void actualizarVisibilidadDelMapa()
@@ -127,112 +164,33 @@ public class ControladorJuego : MonoBehaviour {
 
     /**
      * <summary>
-     * Obtiene el nombre del estado "Congelado" y lo guarda en una propiedad del controlador.
-     * </summary>
-     */
-    public void obtenerEstadoPersonajeCongelado()
-    {
-        if (EstadoPersonajeCongelado == null)
-        {
-            // Busco en los archivos locales todos los estados del personaje.
-            List<EstadoPersonaje> todosLosEstados = Persistencia.ReadFromBinaryFile<List<EstadoPersonaje>>(RUTA_ESTADOS_PERSONAJE);
-
-            // Recorro todos los estados hasta encontrar el estado "Congelado".
-            foreach (EstadoPersonaje estado in todosLosEstados)
-            {
-                if (estado.esEstadoCongelado())
-                {
-                    // Obtengo y guardo el nombre del estado.
-                    EstadoPersonajeCongelado = estado.Nombre;
-                    break;
-                }
-            }
-        }
-    }
-    
-    /**
-     * <summary>
-     * Obtiene el nombre del estado "Confundido" y lo guarda en una propiedad del controlador.
-     * </summary>
-     */
-    public void obtenerEstadoPersonajeConfundido()
-    {
-        if (EstadoPersonajeConfundido == null)
-        {
-            // Busco en los archivos locales todos los estados del personaje.
-            List<EstadoPersonaje> todosLosEstados = Persistencia.ReadFromBinaryFile<List<EstadoPersonaje>>(RUTA_ESTADOS_PERSONAJE);
-
-            // Recorro todos los estados hasta encontrar el estado "Confundido".
-            foreach (EstadoPersonaje estado in todosLosEstados)
-            {
-                if (estado.esEstadoConfundido())
-                {
-                    // Obtengo y guardo el nombre del estado.
-                    EstadoPersonajeConfundido = estado.Nombre;
-                    break;
-                }
-            }
-        }
-    }
-
-    /**
-     * <summary>
-     * Obtiene el nombre del estado "Paralizado" y lo guarda en una propiedad del controlador.
-     * </summary>
-     */
-    public void obtenerEstadoPersonajeParalizado()
-    {
-        if (EstadoPersonajeParalizado == null)
-        {
-            // Busco en los archivos locales todos los estados del personaje.
-            List<EstadoPersonaje> todosLosEstados = Persistencia.ReadFromBinaryFile<List<EstadoPersonaje>>(RUTA_ESTADOS_PERSONAJE);
-
-            // Recorro todos los estados hasta encontrar el estado "Paralizado".
-            foreach (EstadoPersonaje estado in todosLosEstados)
-            {
-                if (estado.esEstadoParalizado())
-                {
-                    // Obtengo y guardo el nombre del estado.
-                    EstadoPersonajeParalizado = estado.Nombre;
-                    break;
-                }
-            }
-        }
-    }
-
-    /**
-     * <summary>
-     * Obtiene los nombres de los estados actuales del personaje y los guarda en una propiedad.
-     * </summary>
-     */
-    public void obtenerEstadosPersonaje()
-    {
-        EstadosPersonaje = Personaje.obtenerEstados();
-    }
-
-    /**
-     * <summary>
      * Verifica si el personaje está en el estado <c>nombreEstado</c>.
      * </summary>
      * <param name="nombreEstado">El nombre del estado a controlar.</param>
-     * <returns>Verdadero si <c>nombreEstado</c> está entre los estados del personaje.</returns>
+     * <returns>Verdadero si <c>nombreEstado</c> está entre los estados del 
+     * personaje.</returns>
      */
-    public bool verificarSiPersonajeEstáEnEstado(string nombreEstado)
+    public bool verificarSiPersonajeEstáEnEstado(EstadosPersonaje estado)
     {
-        return EstadosPersonaje.Contains(nombreEstado);
+        return personaje.verificarSiEstáEnEstado(estado);
     }
 
     /**
      * <summary>
-     * Verifica si hay algo en la dirección en que se quiere mover el personaje que pueda obstruir el movimiento.
+     * Verifica si hay algo en la dirección en que se quiere mover 
+     * el personaje que pueda obstruir el movimiento.
      * </summary>
      * <param name="dirección">Dirección del movimiento.</param>
      * <returns>Falso si el camino está libre.</returns>
      */
     public bool verificarSiElCaminoEstáObstruido(Vector3 dirección)
     {
-        RaycastHit2D hit = Physics2D.Raycast(Personaje.transform.position, dirección);
+        RaycastHit2D hit = Physics2D.Raycast(Personaje.transform.position, dirección, dirección.magnitude);
+        
         if (hit.collider == null)
+        {
+            return false;
+        } else if (hit.collider.tag == "Player")
         {
             return false;
         }
@@ -244,6 +202,7 @@ public class ControladorJuego : MonoBehaviour {
         // Inicializo la pantalla
         pantalla = GameObject.Find("PantallaJuego").GetComponent<PantallaJuego>();
         personaje = GameObject.Find("Personaje").GetComponent<Personaje>();
+        D20 = new Dado(20);
     }
 
     /*

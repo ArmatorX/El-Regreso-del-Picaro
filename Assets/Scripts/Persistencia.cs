@@ -49,6 +49,7 @@ public class Persistencia
      * Método temporal para probar la persistencia. Crea un archivo que contiene los estados alterados que afectan el movimiento del personaje.
      * </summary>
      */
+     /*
     public static void CrearArchivoConTodosLosEstados()
     {
         EstadoPersonaje congelado = new EstadoPersonaje("Congelado");
@@ -64,4 +65,5 @@ public class Persistencia
 
         Persistencia.WriteToBinaryFile<List<EstadoPersonaje>>("Datos/EstadoPersonaje.bin", todosLosEstados, true);
     }
+    */
 }
