@@ -15,8 +15,8 @@ public class Personaje : Entidad
 {
     // Constantes
     private static int COMIDA_MOVIMIENTO = 5;
-    private static float TIEMPO_MOVIMIENTO = 0.1f;
-    private static float TIEMPO_INVERSO_MOVIMIENTO = 1f / TIEMPO_MOVIMIENTO;
+    private static float TIEMPO_MOVIMIENTO = 0.05f;
+    private static float MAX_DELTA_MOVIMIENTO = PantallaJuego.UNIDAD_MOVIMIENTO / TIEMPO_MOVIMIENTO;
 
     // Atributos
     /// <value>El nombre que se le colocó al personaje.</value>
@@ -32,51 +32,36 @@ public class Personaje : Entidad
     private int comidaActual;
     /// <value>Puntos de experiencia actuales del personaje.</value>
     private int experienciaActual;
-    //private Nivel nivel;
+    private Nivel nivel;
     /// <value>Lista de estados en los que se encuentra actualmente el personaje.</value>
     private List<EstadoPersonaje> estados;
+    private bool ventaja;
+    private bool desventaja;
 
     // Físicas
     private Rigidbody2D rigidBody2D;
     private bool seEstáMoviendo;
+    private ControladorJuego controlador;
 
     // Métodos
-    public Personaje(Piso ubicación, int vidaActual, string nombre, int modificadorVidaMáxima, int comidaActual, int experienciaActual, List<EstadoPersonaje> estados) : base(ubicación, vidaActual)
+    public Personaje(Piso ubicación, int vidaActual, string nombre, int modificadorVidaMáxima, int comidaActual, int experienciaActual, List<EstadoPersonaje> estados, bool ventaja, bool desventaja)
+        : base(ubicación, vidaActual)
     {
         this.nombre = nombre;
         this.modificadorVidaMáxima = modificadorVidaMáxima;
         this.comidaActual = comidaActual;
         this.experienciaActual = experienciaActual;
         this.estados = estados;
+        this.ventaja = ventaja;
+        this.desventaja = desventaja;
     }
     public string Nombre { get => nombre; set => nombre = value; }
     public int ModificadorVidaMáxima { get => modificadorVidaMáxima; set => modificadorVidaMáxima = value; }
     public int ComidaActual { get => comidaActual; set => comidaActual = value; }
     public int ExperienciaActual { get => experienciaActual; set => experienciaActual = value; }
     public List<EstadoPersonaje> Estados { get => estados; set => estados = value; }
-
-    /**
-     * <summary>
-     * Obtiene los estados actuales del personaje y devuelve sus respectivos nombres en
-     * una lista de strings.
-     * </summary>
-     * <returns>Lista con los nombres de los estados actuales del personaje.</returns> 
-     */
-    public List<string> obtenerEstados()
-    {
-        // Defino una variable auxiliar para guardar los nombres de los estados.
-        List<string> cadenasEstados = new List<string>();
-
-        // Recorro los estados, buscando los nombres de cada uno.
-        foreach (EstadoPersonaje estado in this.estados)
-        {
-            // Guardo el nombre del estado en la lista.
-            cadenasEstados.Add(estado.Nombre);
-        }
-
-        // Devuelvo la lista de nombres de estados.
-        return cadenasEstados;
-    }
+    public bool Ventaja { get => ventaja; set => ventaja = value; }
+    public bool Desventaja { get => desventaja; set => desventaja = value; }
 
     /**
      * <summary>
@@ -92,13 +77,14 @@ public class Personaje : Entidad
         consumirComida(COMIDA_MOVIMIENTO);
 
         // Muestro la animación del movimiento del personaje.
-        // controlador.mostrarAnimaciónMovimientoPersonaje();
-
+        controlador.mostrarAnimaciónMovimientoPersonaje(dirección);
+        /*
         // Cambio la posición del personaje en Unity.
         IEnumerator corrutina = movimientoSuavizado(dirección);
 
         StartCoroutine(corrutina);
-
+        */
+        //rigidBody2D.position += (Vector2) dirección;
         // Obtengo el casillero de destino.
         // Piso casilleroDestino = controlador.obtenerCasilleroDestino(Ubicación, dirección);
 
@@ -113,12 +99,13 @@ public class Personaje : Entidad
      * <param name="dirección">La dirección en que se quiere mover el personaje.</param>
      * <returns>Es un IEnumerator porque es una corrutina.</returns>
      */
+     /*
     protected IEnumerator movimientoSuavizado(Vector3 dirección)
     {
         if (seEstáMoviendo)
         {
             // Si se está moviendo que espere hasta que termine.
-            yield return new WaitForSeconds(TIEMPO_MOVIMIENTO / 4);
+            yield return new WaitForSeconds(TIEMPO_MOVIMIENTO / 4f);
 
             // Intenta moverte nuevamente.
             IEnumerator corrutina = movimientoSuavizado(dirección);
@@ -133,13 +120,13 @@ public class Personaje : Entidad
             // Calculo la distancia restante.
             float distanciaRestante = (this.transform.position - destino).sqrMagnitude;
 
-            while (distanciaRestante > float.Epsilon)
+            while (distanciaRestante > 0.001)
             {
                 // Deshabilito el movimiento.
                 seEstáMoviendo = true;
 
                 // Calculo la nueva posición a la que se va a mover el personaje.
-                Vector3 nuevaPosición = Vector3.MoveTowards(rigidBody2D.position, destino, TIEMPO_INVERSO_MOVIMIENTO * Time.deltaTime);
+                Vector3 nuevaPosición = Vector3.MoveTowards(rigidBody2D.position, destino, MAX_DELTA_MOVIMIENTO * Time.fixedDeltaTime);
 
                 // Muevo el personaje a la posición calculada.
                 rigidBody2D.MovePosition(nuevaPosición);
@@ -152,13 +139,13 @@ public class Personaje : Entidad
             }
 
             // Pongo la posición del personaje en el lugar de destino.
-            rigidBody2D.MovePosition(destino);
+            rigidBody2D.position = destino;
 
             // Habilito nuevamente el movimiento.
             seEstáMoviendo = false;
         }
     }
-
+    */
     /**
      * <summary>
      * Consume una determinada cantidad de puntos de comida del personaje.
@@ -187,12 +174,13 @@ public class Personaje : Entidad
     {
         // Inicializo los atributos
         rigidBody2D = GetComponent<Rigidbody2D>();
+        controlador = GameObject.Find("ControladorJuego").GetComponent<ControladorJuego>();
 
         ModificadorVidaMáxima = 0;
         ComidaActual = 100;
         ExperienciaActual = 0;
         Estados = new List<EstadoPersonaje>();
-        Estados.Add(new EstadoPersonaje("Normal"));
+        Estados.Add(new EstadoPersonaje(EstadosPersonaje.NORMAL));
 
         Ubicación = new Piso(this.transform.position);
         VidaActual = 100;
@@ -204,5 +192,24 @@ public class Personaje : Entidad
     void Update()
     {
 
+    }
+
+    /// <summary>
+    /// Verifica si el personaje está en un estado alterado a partir
+    /// de su nombre.
+    /// </summary>
+    /// <param name="estado">Nombre del estado alterado.</param>
+    /// <returns>Verdadero si el personaje está en el estado
+    /// alterado.</returns>
+    public bool verificarSiEstáEnEstado(EstadosPersonaje estado)
+    {
+        foreach (EstadoPersonaje estadoAux in Estados)
+        {
+            if (estadoAux.Nombre == estado)
+            {
+                return true;
+            }
+        }
+        return false;
     }
 }

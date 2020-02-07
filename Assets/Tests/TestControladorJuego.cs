@@ -20,10 +20,10 @@ namespace Tests
         private ControladorJuego controlador;
 
         // Datos de salida
-        private string congelado;
-        private string confundido;
-        private string paralizado;
-
+        private EstadosPersonaje congelado;
+        private EstadosPersonaje confundido;
+        private EstadosPersonaje paralizado;
+        
         [SetUp]
         protected void SetUp()
         {
@@ -31,39 +31,13 @@ namespace Tests
             controlador = new ControladorJuego();
 
             // Inicialización de datos de salida
-            congelado = "Congelado";
-            confundido = "Confundido";
-            paralizado = "Paralizado";
+            congelado = EstadosPersonaje.CONGELADO;
+            confundido = EstadosPersonaje.CONFUNDIDO;
+            paralizado = EstadosPersonaje.PARALIZADO;
         }
 
-        [Test]
-        public void TestObtenerEstadoPersonajeCongelado()
-        {
-            controlador.obtenerEstadoPersonajeCongelado();
-
-            Assert.That(controlador.EstadoPersonajeCongelado == congelado,
-                "Expected: " + congelado + ", Obtained: " + controlador.EstadoPersonajeCongelado);
-
-        }
-
-        [Test]
-        public void TestObtenerEstadoPersonajeConfundido()
-        {
-            controlador.obtenerEstadoPersonajeConfundido();
-
-            Assert.That(controlador.EstadoPersonajeConfundido == confundido,
-                "Expected: " + confundido + ", Obtained: " + controlador.EstadoPersonajeConfundido);
-
-        }
-
-        [Test]
-        public void TestObtenerEstadoPersonajeParalizado()
-        {
-            controlador.obtenerEstadoPersonajeParalizado();
-
-            Assert.That(controlador.EstadoPersonajeParalizado == paralizado,
-                "Expected: " + paralizado + ", Obtained: " + controlador.EstadoPersonajeParalizado);
-
-        }
+        
+        
+        
     }
 }

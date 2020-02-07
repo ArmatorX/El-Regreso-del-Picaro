@@ -21,14 +21,14 @@ public class EstadoPersonaje
 {
     // Atributos
     /// <value>El nombre del estado del personaje.</value>
-    private string nombre;
+    EstadosPersonaje nombre;
     
     // Métodos
-    public EstadoPersonaje(string nombre)
+    public EstadoPersonaje(EstadosPersonaje nombre)
     {
         this.nombre = nombre;
     }
-    public string Nombre { get => nombre; set => nombre = value; }
+    public EstadosPersonaje Nombre { get => nombre; set => nombre = value; }
 
     /**
      * <summary>
@@ -38,7 +38,7 @@ public class EstadoPersonaje
      */
     public bool esEstadoCongelado()
     {
-        if (Nombre == "Congelado")
+        if (Nombre == EstadosPersonaje.CONGELADO)
         {
             return true;
         }
@@ -53,7 +53,7 @@ public class EstadoPersonaje
      */
     public bool esEstadoConfundido()
     {
-        if (Nombre == "Confundido")
+        if (Nombre == EstadosPersonaje.CONFUNDIDO)
         {
             return true;
         }
@@ -68,7 +68,7 @@ public class EstadoPersonaje
      */
     public bool esEstadoParalizado()
     {
-        if (Nombre == "Paralizado")
+        if (Nombre == EstadosPersonaje.PARALIZADO)
         {
             return true;
         }

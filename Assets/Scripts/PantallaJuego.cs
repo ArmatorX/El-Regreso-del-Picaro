@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -18,17 +19,19 @@ public class PantallaJuego : MonoBehaviour
     private ControladorJuego controlador;
     /// <value>El objeto personaje de Unity.</value>
     /// <remarks>Necesario para activar las animaciones.</remarks>
-    private GameObject personaje;
+    private Rigidbody2D personajeRB;
+
+    public static float UNIDAD_MOVIMIENTO = 1f;
 
     // Método
-    public PantallaJuego(ControladorJuego controlador, GameObject personaje)
+    public PantallaJuego(ControladorJuego controlador, Rigidbody2D personaje)
     {
         this.controlador = controlador;
-        this.personaje = personaje;
+        this.personajeRB = personaje;
     }
 
     public ControladorJuego Controlador { get => controlador; set => controlador = value; }
-    public GameObject Personaje { get => personaje; set => personaje = value; }
+    public Rigidbody2D PersonajeRB { get => personajeRB == null ? personajeRB = GameObject.Find("Personaje").GetComponent<Rigidbody2D>() : personajeRB; set => personajeRB = value; }
 
     /**
      * <summary>
@@ -54,19 +57,19 @@ public class PantallaJuego : MonoBehaviour
 
         if (Input.GetButtonDown("Up"))
         {
-            dirección = Vector3.up;
+            dirección = Vector3.up * UNIDAD_MOVIMIENTO;
         }
         else if (Input.GetButtonDown("Down"))
         {
-            dirección = Vector3.down;
+            dirección = Vector3.down * UNIDAD_MOVIMIENTO;
         }
         else if (Input.GetButtonDown("Right"))
         {
-            dirección = Vector3.right;
+            dirección = Vector3.right * UNIDAD_MOVIMIENTO;
         }
         else if (Input.GetButtonDown("Left"))
         {
-            dirección = Vector3.left;
+            dirección = Vector3.left * UNIDAD_MOVIMIENTO;
         }
         else
         {
@@ -81,7 +84,6 @@ public class PantallaJuego : MonoBehaviour
     {
         // Inicializo el controlador
         controlador = GameObject.Find("ControladorJuego").GetComponent<ControladorJuego>();
-
     }
 
     // Update is called once per frame
@@ -100,5 +102,10 @@ public class PantallaJuego : MonoBehaviour
             }
             
         }
+    }
+
+    public void mostrarAnimaciónMovimientoPersonaje(Vector3 dirección)
+    {
+        PersonajeRB.position += (Vector2) dirección;
     }
 }

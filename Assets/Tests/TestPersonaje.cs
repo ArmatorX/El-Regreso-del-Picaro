@@ -42,11 +42,6 @@ namespace Tests
         private EstadoPersonaje paralizado;
         private EstadoPersonaje normal;
 
-        // Datos de salida
-        private string nombreNormal;
-        private string nombreConfundido;
-        private string nombreParalizado;
-
         private int cantidadEstadosPersonaje1;
         private int cantidadEstadosPersonaje2;
         private int cantidadEstadosPersonaje3;
@@ -69,10 +64,6 @@ namespace Tests
         [SetUp]
         protected void SetUp()
         {
-            // Inicializo los datos de entrada.
-            nombreNormal = "Normal";
-            nombreConfundido = "Confundido";
-            nombreParalizado = "Paralizado";
 
             casillero = new Piso(Vector3.zero);
             vida = 100;
@@ -89,9 +80,9 @@ namespace Tests
 
             experienciaActual = 0;
 
-            confundido = new EstadoPersonaje(nombreConfundido);
-            paralizado = new EstadoPersonaje(nombreParalizado);
-            normal = new EstadoPersonaje(nombreNormal);
+            confundido = new EstadoPersonaje(EstadosPersonaje.CONFUNDIDO);
+            paralizado = new EstadoPersonaje(EstadosPersonaje.PARALIZADO);
+            normal = new EstadoPersonaje(EstadosPersonaje.NORMAL);
 
             estadosPersonaje1 = new List<EstadoPersonaje>();
             estadosPersonaje2 = new List<EstadoPersonaje>();
@@ -121,30 +112,6 @@ namespace Tests
             comidaP1C3 = 86;
             comidaP2C3 = 26;
             comidaP3C3 = 0;
-        }
-
-        /**
-         * <summary>
-         * Prueba el método obtenerEstados.
-         * </summary>
-         */
-        [Test]
-        public void TestObtenerEstados()
-        {
-            List<string> estadosPersonaje1 = personajeNormal.obtenerEstados();
-            List<string> estadosPersonaje2 = personajeConfundido.obtenerEstados();
-            List<string> estadosPersonaje3 = personajeConfundidoYParalizado.obtenerEstados();
-
-            // Verifico que la cantidad de estados sea correcta.
-            Assert.That(estadosPersonaje1.Count == cantidadEstadosPersonaje1);
-            Assert.That(estadosPersonaje2.Count == cantidadEstadosPersonaje2);
-            Assert.That(estadosPersonaje3.Count == cantidadEstadosPersonaje3);
-
-            // Verifico que los estados sean correctos.
-            Assert.That(estadosPersonaje1.Contains(nombreNormal));
-            Assert.That(estadosPersonaje2.Contains(nombreConfundido));
-            Assert.That(estadosPersonaje3.Contains(nombreConfundido));
-            Assert.That(estadosPersonaje3.Contains(nombreParalizado));
         }
 
         /**
