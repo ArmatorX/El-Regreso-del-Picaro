@@ -78,4 +78,9 @@ public class Enemigo : Entidad
 
         return false;
     }
+
+    internal bool verificarSiAtaqueImpacta(int impacto)
+    {
+        return impacto >= Defensa;
+    }
 }

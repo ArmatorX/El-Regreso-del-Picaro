@@ -15,6 +15,7 @@ public class Personaje : Entidad
 {
     // Constantes
     private static int COMIDA_MOVIMIENTO = 5;
+    private static int COMIDA_ATAQUE_MELÉ = 10;
     private static float TIEMPO_MOVIMIENTO = 0.05f;
     private static float MAX_DELTA_MOVIMIENTO = PantallaJuego.UNIDAD_MOVIMIENTO / TIEMPO_MOVIMIENTO;
 
@@ -32,11 +33,13 @@ public class Personaje : Entidad
     private int comidaActual;
     /// <value>Puntos de experiencia actuales del personaje.</value>
     private int experienciaActual;
-    private Nivel nivel;
+    private Nivel nivelActual;
     /// <value>Lista de estados en los que se encuentra actualmente el personaje.</value>
     private List<EstadoPersonaje> estados;
     private bool ventaja;
     private bool desventaja;
+    private Equipo equipoActual;
+    private bool esAtaqueCrítico;
 
     // Físicas
     private Rigidbody2D rigidBody2D;
@@ -62,6 +65,10 @@ public class Personaje : Entidad
     public List<EstadoPersonaje> Estados { get => estados; set => estados = value; }
     public bool Ventaja { get => ventaja; set => ventaja = value; }
     public bool Desventaja { get => desventaja; set => desventaja = value; }
+    public ControladorJuego Controlador { get => controlador; set => controlador = value; }
+    public Equipo EquipoActual { get => equipoActual; set => equipoActual = value; }
+    public Nivel NivelActual { get => nivelActual; set => nivelActual = value; }
+    public bool EsAtaqueCrítico { get => esAtaqueCrítico; set => esAtaqueCrítico = value; }
 
     /**
      * <summary>
@@ -77,7 +84,7 @@ public class Personaje : Entidad
         consumirComida(COMIDA_MOVIMIENTO);
 
         // Muestro la animación del movimiento del personaje.
-        controlador.mostrarAnimaciónMovimientoPersonaje(dirección);
+        Controlador.mostrarAnimaciónMovimientoPersonaje(dirección);
         /*
         // Cambio la posición del personaje en Unity.
         IEnumerator corrutina = movimientoSuavizado(dirección);
@@ -99,53 +106,53 @@ public class Personaje : Entidad
      * <param name="dirección">La dirección en que se quiere mover el personaje.</param>
      * <returns>Es un IEnumerator porque es una corrutina.</returns>
      */
-     /*
-    protected IEnumerator movimientoSuavizado(Vector3 dirección)
-    {
-        if (seEstáMoviendo)
-        {
-            // Si se está moviendo que espere hasta que termine.
-            yield return new WaitForSeconds(TIEMPO_MOVIMIENTO / 4f);
+    /*
+   protected IEnumerator movimientoSuavizado(Vector3 dirección)
+   {
+       if (seEstáMoviendo)
+       {
+           // Si se está moviendo que espere hasta que termine.
+           yield return new WaitForSeconds(TIEMPO_MOVIMIENTO / 4f);
 
-            // Intenta moverte nuevamente.
-            IEnumerator corrutina = movimientoSuavizado(dirección);
+           // Intenta moverte nuevamente.
+           IEnumerator corrutina = movimientoSuavizado(dirección);
 
-            StartCoroutine(corrutina);
-        }
-        else
-        {
-            // Obtengo la posición de destino.
-            Vector3 destino = this.transform.position + dirección;
+           StartCoroutine(corrutina);
+       }
+       else
+       {
+           // Obtengo la posición de destino.
+           Vector3 destino = this.transform.position + dirección;
 
-            // Calculo la distancia restante.
-            float distanciaRestante = (this.transform.position - destino).sqrMagnitude;
+           // Calculo la distancia restante.
+           float distanciaRestante = (this.transform.position - destino).sqrMagnitude;
 
-            while (distanciaRestante > 0.001)
-            {
-                // Deshabilito el movimiento.
-                seEstáMoviendo = true;
+           while (distanciaRestante > 0.001)
+           {
+               // Deshabilito el movimiento.
+               seEstáMoviendo = true;
 
-                // Calculo la nueva posición a la que se va a mover el personaje.
-                Vector3 nuevaPosición = Vector3.MoveTowards(rigidBody2D.position, destino, MAX_DELTA_MOVIMIENTO * Time.fixedDeltaTime);
+               // Calculo la nueva posición a la que se va a mover el personaje.
+               Vector3 nuevaPosición = Vector3.MoveTowards(rigidBody2D.position, destino, MAX_DELTA_MOVIMIENTO * Time.fixedDeltaTime);
 
-                // Muevo el personaje a la posición calculada.
-                rigidBody2D.MovePosition(nuevaPosición);
+               // Muevo el personaje a la posición calculada.
+               rigidBody2D.MovePosition(nuevaPosición);
 
-                // Vuelvo a calcular la distancia restante.
-                distanciaRestante = (this.transform.position - destino).sqrMagnitude;
+               // Vuelvo a calcular la distancia restante.
+               distanciaRestante = (this.transform.position - destino).sqrMagnitude;
 
-                // Salta un frame, y continúa el loop hasta que está en un valor cercano a la posición de destino.
-                yield return null;
-            }
+               // Salta un frame, y continúa el loop hasta que está en un valor cercano a la posición de destino.
+               yield return null;
+           }
 
-            // Pongo la posición del personaje en el lugar de destino.
-            rigidBody2D.position = destino;
+           // Pongo la posición del personaje en el lugar de destino.
+           rigidBody2D.position = destino;
 
-            // Habilito nuevamente el movimiento.
-            seEstáMoviendo = false;
-        }
-    }
-    */
+           // Habilito nuevamente el movimiento.
+           seEstáMoviendo = false;
+       }
+   }
+   */
     /**
      * <summary>
      * Consume una determinada cantidad de puntos de comida del personaje.
@@ -169,12 +176,91 @@ public class Personaje : Entidad
         }
     }
 
+    public void atacarCuerpoACuerpo(Enemigo enemigo)
+    {
+        int modificadorMisceláneo = 0;
+        int impacto = calcularImpacto(modificadorMisceláneo);
+        int daño = 0;
+
+        if (Controlador.verificarSiAtaqueImpacta(impacto))
+        {
+            if (!armaEquipadaEstáVorpalizada())
+            {
+                daño = calcularDaño(obtenerModificadorFuerza(modificadorMisceláneo));
+
+                if (EsAtaqueCrítico)
+                {
+                    daño *= 2;
+                }
+            }
+        }
+
+        consumirComida(COMIDA_ATAQUE_MELÉ);
+
+        Controlador.mostrarAnimaciónAtaqueCuerpoACuerpoPersonaje(daño, EsAtaqueCrítico);
+
+        EsAtaqueCrítico = false;
+    }
+
+    public int calcularDaño(int modificador)
+    {
+        int cantidadDadosDaño = NivelActual.obtenerCantidadDadosDaño();
+
+        int dañoBase = EquipoActual.calcularDañoBase(cantidadDadosDaño);
+
+        return dañoBase + modificador;
+    }
+
+    public bool armaEquipadaEstáVorpalizada()
+    {
+        return EquipoActual.armaEquipadaEstáVorpalizada();
+    }
+
+    public int calcularImpacto(int modificadorMisceláneo)
+    {
+        int impacto = 0;
+
+        impacto += Controlador.tirarDadoImpacto(Ventaja, Desventaja);
+
+        if (impacto == 20)
+        {
+            EsAtaqueCrítico = true;
+        }
+        else
+        {
+            EsAtaqueCrítico = false;
+        }
+
+        impacto += obtenerModificadorFuerza(modificadorMisceláneo);
+
+        return impacto;
+    }
+
+    private int obtenerModificadorFuerza(int modificadorMisceláneo)
+    {
+        int modificador = 0;
+        modificador += obtenerModificadorFuerzaBase();
+        modificador += obtenerModificadoresEquipoParaFuerza();
+        modificador += modificadorMisceláneo;
+        return modificador;
+    }
+
+    public int obtenerModificadoresEquipoParaFuerza()
+    {
+        return EquipoActual.obtenerModificadoresEquipoParaFuerza();
+    }
+
+    public int obtenerModificadorFuerzaBase()
+    {
+        return NivelActual.obtenerModificadorFuerzaBase();
+    }
+
     // Start is called before the first frame update
     void Start()
     {
         // Inicializo los atributos
         rigidBody2D = GetComponent<Rigidbody2D>();
-        controlador = GameObject.Find("ControladorJuego").GetComponent<ControladorJuego>();
+        Controlador = GameObject.Find("ControladorJuego").GetComponent<ControladorJuego>();
 
         ModificadorVidaMáxima = 0;
         ComidaActual = 100;
@@ -186,6 +272,8 @@ public class Personaje : Entidad
         VidaActual = 100;
 
         seEstáMoviendo = false;
+
+        EquipoActual = new Equipo();
     }
 
     // Update is called once per frame

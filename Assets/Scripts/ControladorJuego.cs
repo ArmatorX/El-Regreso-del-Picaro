@@ -99,7 +99,7 @@ public class ControladorJuego : MonoBehaviour {
                     {
                         obtenerEnemigoEnDirecciónMovimiento(dirección);
 
-                        if (!verificarSiEnemigoEstáEnEstado(EstadosEnemigo.MUERTO))
+                        if (!verificarSiEnemigoEstáEnEstado(EstadosEnemigo.MUERTO, ObjetivoActual))
                         {
                             try
                             {
@@ -125,9 +125,15 @@ public class ControladorJuego : MonoBehaviour {
                 {
                     if (!verificarSiPersonajeEstáEnEstado(EstadosPersonaje.HAMBRIENTO))
                     {
-                        if (!verificarSiEnemigoEstáEnEstado(EstadosEnemigo.INVISIBLE))
+                        if (!verificarSiEnemigoEstáEnEstado(EstadosEnemigo.INVISIBLE, ObjetivoActual))
                         {
-
+                            if (!verificarSiPersonajeEstáEnEstado(EstadosPersonaje.INVISIBLE))
+                            {
+                                if (!verificarSiEnemigoEstáEnEstado(EstadosEnemigo.VOLANDO, ObjetivoActual))
+                                {
+                                    realizarAtaqueEnemigoCuerpoACuerpo(ObjetivoActual);
+                                }
+                            }
                         }
                     }
                 }
@@ -135,9 +141,14 @@ public class ControladorJuego : MonoBehaviour {
         }
     }
 
-    public bool verificarSiEnemigoEstáEnEstado(EstadosEnemigo estado)
+    public void realizarAtaqueEnemigoCuerpoACuerpo(Enemigo enemigo)
     {
-        return ObjetivoActual.verificarSiEstáEnEstado(estado);
+        Personaje.atacarCuerpoACuerpo(enemigo);
+    }
+
+    public bool verificarSiEnemigoEstáEnEstado(EstadosEnemigo estado, Enemigo enemigo)
+    {
+        return enemigo.verificarSiEstáEnEstado(estado);
     }
 
     public void obtenerEnemigoEnDirecciónMovimiento(Vector3 dirección)
@@ -157,9 +168,32 @@ public class ControladorJuego : MonoBehaviour {
         return false;
     }
 
+    public int tirarDadoImpacto(bool conVentaja, bool conDesventaja)
+    {
+        int tirada = D20.tirarDados(1);
+        int aux = D20.tirarDados(1);
+
+        if ((conVentaja && aux > tirada) || (conDesventaja && aux < tirada))
+        {
+             tirada = aux;
+        }
+
+        return tirada;
+    }
+
+    internal bool verificarSiAtaqueImpacta(int impacto)
+    {
+        return ObjetivoActual.verificarSiAtaqueImpacta(impacto);
+    }
+
     public void actualizarVisibilidadDelMapa()
     {
         throw new NotImplementedException();
+    }
+
+    public void mostrarAnimaciónAtaqueCuerpoACuerpoPersonaje(int dañoRealizado, bool esCrítico)
+    {
+        Pantalla.mostrarAnimaciónAtaqueCuerpoACuerpoPersonaje(DirecciónMovimiento, ObjetivoActual, dañoRealizado, esCrítico);
     }
 
     /**

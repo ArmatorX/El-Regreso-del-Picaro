@@ -108,4 +108,9 @@ public class PantallaJuego : MonoBehaviour
     {
         PersonajeRB.position += (Vector2) dirección;
     }
+
+    public void mostrarAnimaciónAtaqueCuerpoACuerpoPersonaje(Vector3 dirección, Enemigo objetivo, int dañoRealizado, bool esCrítico)
+    {
+        Debug.Log(dirección + "/n" + objetivo.VidaActual + "/n" + dañoRealizado + "/n" + esCrítico);
+    }
 }

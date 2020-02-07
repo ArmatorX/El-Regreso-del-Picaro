@@ -9,7 +9,7 @@ public class Equipo
     private Armadura armaduraEquipada;
     private Anillo anillo1Equipado;
     private Anillo anillo2Equipado;
-
+    /*
     public Equipo(Arma arma, Armadura armadura, Anillo anillo1, Anillo anillo2)
     {
         this.armaEquipada = arma;
@@ -17,7 +17,7 @@ public class Equipo
         this.anillo1Equipado = anillo1;
         this.anillo2Equipado = anillo2;
     }
-
+    */
     public Arma ArmaEquipada { get => armaEquipada; set => armaEquipada = value; }
     public Armadura ArmaduraEquipada { get => armaduraEquipada; set => armaduraEquipada = value; }
     public Anillo Anillo1Equipado { get => anillo1Equipado; set => anillo1Equipado = value; }
@@ -40,7 +40,7 @@ public class Equipo
             }
         }
 
-        modificador += +obtenerModificadorFuerzaAnillosEquipados();
+        modificador += obtenerModificadorFuerzaAnillosEquipados();
 
         return  modificador;
     }
