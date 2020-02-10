@@ -92,13 +92,19 @@ public class Equipo
 
     public bool armaEquipadaEstáVorpalizada()
     {
-        return ArmaEquipada.EsArmaVorpalizada;
+        if (hayArmaEquipada())
+        {
+            return ArmaEquipada.EsArmaVorpalizada;
+        }
+        return false;
     }
 
     public int calcularDañoBase(int cantidadDados)
     {
-        // No controlo si hay un arma equipada porque no se calcula
-        // el daño sin calcular el impacto antes.
-        return ArmaEquipada.calcularDañoBase(cantidadDados);
+        if (hayArmaEquipada())
+        {
+            return ArmaEquipada.calcularDañoBase(cantidadDados);
+        }
+        return 2;
     }
 }

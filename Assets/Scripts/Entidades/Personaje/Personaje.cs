@@ -182,24 +182,28 @@ public class Personaje : Entidad
         int impacto = calcularImpacto(modificadorMisceláneo);
         int daño = 0;
 
-        if (Controlador.verificarSiAtaqueImpacta(impacto))
+        if (!armaEquipadaEstáVorpalizada())
         {
-            if (!armaEquipadaEstáVorpalizada())
-            {
-                daño = calcularDaño(obtenerModificadorFuerza(modificadorMisceláneo));
+            daño = calcularDaño(obtenerModificadorFuerza(modificadorMisceláneo));
 
-                if (EsAtaqueCrítico)
-                {
-                    daño *= 2;
-                }
+            if (EsAtaqueCrítico)
+            {
+                daño *= 2;
             }
         }
+
+        realizarAtaque(impacto, daño, EsAtaqueCrítico);
 
         consumirComida(COMIDA_ATAQUE_MELÉ);
 
         Controlador.mostrarAnimaciónAtaqueCuerpoACuerpoPersonaje(daño, EsAtaqueCrítico);
 
         EsAtaqueCrítico = false;
+    }
+
+    public void realizarAtaque(int impacto, int daño, bool esCrítico)
+    {
+        Controlador.realizarAtaque(impacto, daño, esCrítico);
     }
 
     public int calcularDaño(int modificador)
@@ -274,6 +278,11 @@ public class Personaje : Entidad
         seEstáMoviendo = false;
 
         EquipoActual = new Equipo();
+        Arma arma = new EspadaLarga();
+        EquipoActual.ArmaEquipada = arma;
+
+        EstadísticasNivel en1 = new EstadísticasNivel(14, 14, 16, 12, 25, 100, 1);
+        NivelActual = new Nivel(1, 0, 150, en1);
     }
 
     // Update is called once per frame

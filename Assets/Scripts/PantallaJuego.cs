@@ -111,6 +111,9 @@ public class PantallaJuego : MonoBehaviour
 
     public void mostrarAnimaciónAtaqueCuerpoACuerpoPersonaje(Vector3 dirección, Enemigo objetivo, int dañoRealizado, bool esCrítico)
     {
-        Debug.Log(dirección + "/n" + objetivo.VidaActual + "/n" + dañoRealizado + "/n" + esCrítico);
+        Debug.Log(dirección);
+        Debug.Log(objetivo.VidaActual);
+        Debug.Log(dañoRealizado);
+        Debug.Log(esCrítico);
     }
 }

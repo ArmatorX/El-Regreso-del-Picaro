@@ -101,13 +101,13 @@ public class ControladorJuego : MonoBehaviour {
 
                         if (!verificarSiEnemigoEstáEnEstado(EstadosEnemigo.MUERTO, ObjetivoActual))
                         {
-                            try
-                            {
+                            //try
+                            //{
                                 atacarEnemigoCuerpoACuerpo(dirección);
-                            } catch (Exception e)
-                            {
+                            //} catch (Exception e)
+                            //{
                                 
-                            }
+                            //}
                         }
                     }
                 }
@@ -181,10 +181,12 @@ public class ControladorJuego : MonoBehaviour {
         return tirada;
     }
 
+    /*
     internal bool verificarSiAtaqueImpacta(int impacto)
     {
         return ObjetivoActual.verificarSiAtaqueImpacta(impacto);
     }
+    */
 
     public void actualizarVisibilidadDelMapa()
     {
@@ -194,6 +196,11 @@ public class ControladorJuego : MonoBehaviour {
     public void mostrarAnimaciónAtaqueCuerpoACuerpoPersonaje(int dañoRealizado, bool esCrítico)
     {
         Pantalla.mostrarAnimaciónAtaqueCuerpoACuerpoPersonaje(DirecciónMovimiento, ObjetivoActual, dañoRealizado, esCrítico);
+    }
+
+    public void realizarAtaque(int impacto, int daño, bool esCrítico)
+    {
+        ObjetivoActual.recibirAtaque(impacto, daño, esCrítico);
     }
 
     /**

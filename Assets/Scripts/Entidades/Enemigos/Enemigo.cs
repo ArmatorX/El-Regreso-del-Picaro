@@ -55,7 +55,7 @@ public class Enemigo : Entidad
         Estados = new List<EstadoEnemigo>();
         Estados.Add(new EstadoEnemigo(EstadosEnemigo.NORMAL));
 
-        VidaMáxima = 1;
+        VidaMáxima = 10;
         VidaActual = VidaMáxima;
         Defensa = 0;
     }
@@ -63,7 +63,10 @@ public class Enemigo : Entidad
     // Update is called once per frame
     void Update()
     {
-        
+        if (Estados[0].Nombre == EstadosEnemigo.MUERTO)
+        {
+            Destroy(gameObject);
+        }
     }
 
     public bool verificarSiEstáEnEstado(EstadosEnemigo estado)
@@ -79,8 +82,30 @@ public class Enemigo : Entidad
         return false;
     }
 
-    internal bool verificarSiAtaqueImpacta(int impacto)
+    public bool verificarSiAtaqueImpacta(int impacto, bool esCrítico)
     {
-        return impacto >= Defensa;
+        return impacto >= Defensa || esCrítico;
+    }
+
+    public void recibirAtaque(int impacto, int daño, bool esCrítico)
+    {
+        if (verificarSiAtaqueImpacta(impacto, esCrítico))
+        {
+            recibirDaño(daño);
+        }
+    }
+
+    public void recibirDaño(int daño)
+    {
+        if (VidaActual <= daño)
+        {
+            VidaActual = 0;
+            Estados.Clear();
+            Estados.Add(new EstadoEnemigo(EstadosEnemigo.MUERTO));
+        }
+        else
+        {
+            VidaActual -= daño;
+        }
     }
 }

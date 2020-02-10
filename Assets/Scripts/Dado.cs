@@ -25,7 +25,7 @@ public class Dado
 
         for (int i = 0; i < cantidad; i ++)
         {
-            salida += Random.Range(1, CantidadCaras);
+            salida += Random.Range(1, CantidadCaras + 1);
         }
         
         return salida;
