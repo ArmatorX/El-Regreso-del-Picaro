@@ -116,4 +116,19 @@ public class PantallaJuego : MonoBehaviour
         Debug.Log(dañoRealizado);
         Debug.Log(esCrítico);
     }
+
+    internal void mostrarExcepcion(Exception e)
+    {
+        throw new NotImplementedException();
+    }
+
+    internal void mostrarAtaquePersonajeFalla()
+    {
+        throw new NotImplementedException();
+    }
+
+    internal void mostrarMovimientoPersonajeFalla()
+    {
+        throw new NotImplementedException();
+    }
 }

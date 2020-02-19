@@ -14,8 +14,8 @@ using UnityEngine;
 public class Personaje : Entidad
 {
     // Constantes
-    private static int COMIDA_MOVIMIENTO = 5;
-    private static int COMIDA_ATAQUE_MELÉ = 10;
+    public static int COMIDA_MOVIMIENTO = 5;
+    public static int COMIDA_ATAQUE_MELÉ = 10;
     private static float TIEMPO_MOVIMIENTO = 0.05f;
     private static float MAX_DELTA_MOVIMIENTO = PantallaJuego.UNIDAD_MOVIMIENTO / TIEMPO_MOVIMIENTO;
 
@@ -63,8 +63,13 @@ public class Personaje : Entidad
     public int ComidaActual { get => comidaActual; set => comidaActual = value; }
     public int ExperienciaActual { get => experienciaActual; set => experienciaActual = value; }
     public List<EstadoPersonaje> Estados { get => estados; set => estados = value; }
-    public bool Ventaja { get => ventaja; set => ventaja = value; }
-    public bool Desventaja { get => desventaja; set => desventaja = value; }
+    public bool Ventaja {
+        get => ventaja;
+        set => ventaja = value && !desventaja;
+    }
+    public bool Desventaja {
+        get => desventaja;
+        set => desventaja = value && !ventaja; }
     public ControladorJuego Controlador { get => controlador; set => controlador = value; }
     public Equipo EquipoActual { get => equipoActual; set => equipoActual = value; }
     public Nivel NivelActual { get => nivelActual; set => nivelActual = value; }
@@ -176,9 +181,8 @@ public class Personaje : Entidad
         }
     }
 
-    public void atacarCuerpoACuerpo(Enemigo enemigo)
+    public void atacarCuerpoACuerpo(Enemigo enemigo, int modificadorMisceláneo)
     {
-        int modificadorMisceláneo = 0;
         int impacto = calcularImpacto(modificadorMisceláneo);
         int daño = 0;
 
@@ -224,7 +228,7 @@ public class Personaje : Entidad
     {
         int impacto = 0;
 
-        impacto += Controlador.tirarDadoImpacto(Ventaja, Desventaja);
+        impacto += Controlador.tirarD20(Ventaja, Desventaja);
 
         if (impacto == 20)
         {
@@ -240,7 +244,7 @@ public class Personaje : Entidad
         return impacto;
     }
 
-    private int obtenerModificadorFuerza(int modificadorMisceláneo)
+    public int obtenerModificadorFuerza(int modificadorMisceláneo)
     {
         int modificador = 0;
         modificador += obtenerModificadorFuerzaBase();

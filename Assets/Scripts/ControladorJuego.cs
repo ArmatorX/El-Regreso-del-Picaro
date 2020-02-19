@@ -67,6 +67,10 @@ public class ControladorJuego : MonoBehaviour {
     public Enemigo ObjetivoActual { get => objetivoActual; set => objetivoActual = value; }
     public Dado D20 { get => d20; set => d20 = value; }
 
+    /// <summary>
+    /// Muestra la animación de movimiento del personaje.
+    /// </summary>
+    /// <param name="dirección">Dirección del movimiento.</param>
     public void mostrarAnimaciónMovimientoPersonaje(Vector3 dirección)
     {
         pantalla.mostrarAnimaciónMovimientoPersonaje(dirección);
@@ -84,73 +88,171 @@ public class ControladorJuego : MonoBehaviour {
         
         if (!verificarSiPersonajeEstáEnEstado(EstadosPersonaje.CONGELADO))
         {
-            if (!verificarSiPersonajeEstáEnEstado(EstadosPersonaje.CONFUNDIDO))
+            if (verificarSiPersonajeEstáEnEstado(EstadosPersonaje.CONFUNDIDO))
             {
-                if (!verificarSiPersonajeEstáEnEstado(EstadosPersonaje.PARALIZADO))
+                if(!verificarSiObstruidoPorEnemigo(DirecciónMovimiento))
                 {
-                    if (!verificarSiElCaminoEstáObstruido(dirección))
-                    {
-                        // Mover personaje.
-                        Personaje.moverse(dirección);
+                    cambiarDirecciónMovimiento();
+                }
+            }
 
-                        // Actualizar visibilidad del mapa.
-                        //actualizarVisibilidadDelMapa();
-                    } else if (verificarSiObstruidoPorEnemigo(dirección))
-                    {
-                        obtenerEnemigoEnDirecciónMovimiento(dirección);
+            if (verificarSiPersonajeEstáEnEstado(EstadosPersonaje.PARALIZADO))
+            {
+                if (verificarSiElCaminoEstáObstruido(DirecciónMovimiento))
+                {
+                    Personaje.consumirComida(Personaje.COMIDA_MOVIMIENTO);
+                    Pantalla.mostrarMovimientoPersonajeFalla();
+                }
+            } 
+            else
+            {
+                if (!verificarSiElCaminoEstáObstruido(DirecciónMovimiento))
+                {
+                    // Mover personaje.
+                    Personaje.moverse(DirecciónMovimiento);
 
-                        if (!verificarSiEnemigoEstáEnEstado(EstadosEnemigo.MUERTO, ObjetivoActual))
+                    // Actualizar visibilidad del mapa.
+                    //actualizarVisibilidadDelMapa();
+                }
+                else if (verificarSiObstruidoPorEnemigo(DirecciónMovimiento))
+                {
+                    obtenerEnemigoEnDirecciónMovimiento(DirecciónMovimiento);
+
+                    if (!verificarSiEnemigoEstáEnEstado(EstadosEnemigo.MUERTO, ObjetivoActual))
+                    {
+                        try
                         {
-                            //try
-                            //{
-                                atacarEnemigoCuerpoACuerpo(dirección);
-                            //} catch (Exception e)
-                            //{
-                                
-                            //}
+                            atacarEnemigoCuerpoACuerpo(DirecciónMovimiento);
+                        }
+                        catch (Exception e)
+                        {
+                            Pantalla.mostrarExcepcion(e);
                         }
                     }
                 }
             }
+        } 
+        else
+        {
+            Personaje.consumirComida(Personaje.COMIDA_MOVIMIENTO);
+            Pantalla.mostrarMovimientoPersonajeFalla();
         }
     }
 
+    /// <summary>
+    /// Cambia la dirección de movimiento actual por una aleatoria,
+    /// que no esté obstruida por un enemigo.
+    /// </summary>
+    public void cambiarDirecciónMovimiento()
+    {
+        List<Vector3> direcciones = new List<Vector3>();
+        direcciones.Add(Vector3.up);
+        direcciones.Add(Vector3.left);
+        direcciones.Add(Vector3.down);
+        direcciones.Add(Vector3.right);
+
+        for (int i = 0; i < 4; i++)
+        {
+            if (verificarSiObstruidoPorEnemigo(obtenerDirección(i)))
+            {
+                direcciones.Remove(obtenerDirección(i));
+            }
+        }
+
+        DirecciónMovimiento = direcciones[UnityEngine.Random.Range(0, direcciones.Count)];
+    }
+
+    /// <summary>
+    /// Obtiene una dirección válida de movimiento en función de un 
+    /// número. Se usa para loopear las direcciones.
+    /// </summary>
+    /// <param name="dirección">Entero que representa una dirección.</param>
+    /// <returns></returns>
+    private Vector3 obtenerDirección(int dirección)
+    {
+        switch (dirección)
+        {
+            case 0:
+                return Vector3.up;
+                break;
+            case 1:
+                return Vector3.left;
+                break;
+            case 2:
+                return Vector3.down;
+                break;
+            case 3:
+                return Vector3.right;
+                break;
+            default:
+                return Vector3.zero;
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Realiza el ataque del personaje a un enemigo cuerpo a cuerpo.
+    /// </summary>
+    /// <param name="dirección">Dirección en que se realiza el ataque.</param>
     public void atacarEnemigoCuerpoACuerpo(Vector3 dirección)
     {
         if (!verificarSiPersonajeEstáEnEstado(EstadosPersonaje.DÉBIL))
         {
             if (!verificarSiPersonajeEstáEnEstado(EstadosPersonaje.CONFUNDIDO))
             {
-                if (!verificarSiPersonajeEstáEnEstado(EstadosPersonaje.CEGADO))
+                if (verificarSiPersonajeEstáEnEstado(EstadosPersonaje.CEGADO) || verificarSiPersonajeEstáEnEstado(EstadosPersonaje.HAMBRIENTO) || verificarSiEnemigoEstáEnEstado(EstadosEnemigo.INVISIBLE, ObjetivoActual))
                 {
-                    if (!verificarSiPersonajeEstáEnEstado(EstadosPersonaje.HAMBRIENTO))
-                    {
-                        if (!verificarSiEnemigoEstáEnEstado(EstadosEnemigo.INVISIBLE, ObjetivoActual))
-                        {
-                            if (!verificarSiPersonajeEstáEnEstado(EstadosPersonaje.INVISIBLE))
-                            {
-                                if (!verificarSiEnemigoEstáEnEstado(EstadosEnemigo.VOLANDO, ObjetivoActual))
-                                {
-                                    realizarAtaqueEnemigoCuerpoACuerpo(ObjetivoActual);
-                                }
-                            }
-                        }
-                    }
+                    Personaje.Desventaja = true;
+                }
+
+                if (!verificarSiPersonajeEstáEnEstado(EstadosPersonaje.INVISIBLE))
+                {
+                    Personaje.Ventaja = true;
+                }
+
+                if (!verificarSiEnemigoEstáEnEstado(EstadosEnemigo.VOLANDO, ObjetivoActual))
+                {
+                    Personaje.atacarCuerpoACuerpo(ObjetivoActual, 0);
+                } 
+                else
+                {
+                    Personaje.atacarCuerpoACuerpo(ObjetivoActual, -5);
                 }
             }
+            else if (tirarD20(false, false) <= 4)
+            {
+                autoatacarPersonaje();
+            }
+        }
+        else
+        {
+            Pantalla.mostrarAtaquePersonajeFalla();
         }
     }
 
-    public void realizarAtaqueEnemigoCuerpoACuerpo(Enemigo enemigo)
+    /// <summary>
+    /// El personaje se ataca a sí mismo.
+    /// </summary>
+    private void autoatacarPersonaje()
     {
-        Personaje.atacarCuerpoACuerpo(enemigo);
+        throw new NotImplementedException();
     }
 
+    /// <summary>
+    /// Verifica si un enemigo está en un estado determinado.
+    /// </summary>
+    /// <param name="estado">Estado a controlar.</param>
+    /// <param name="enemigo">Enemigo que se quiere verificar.</param>
+    /// <returns>Verdadero si está en el estado.</returns>
     public bool verificarSiEnemigoEstáEnEstado(EstadosEnemigo estado, Enemigo enemigo)
     {
         return enemigo.verificarSiEstáEnEstado(estado);
     }
 
+    /// <summary>
+    /// Obtiene el enemigo que se encuentra en la dirección.
+    /// </summary>
+    /// <param name="dirección">Dirección.</param>
     public void obtenerEnemigoEnDirecciónMovimiento(Vector3 dirección)
     {
         RaycastHit2D hit = Physics2D.Raycast(Personaje.transform.position, dirección, dirección.magnitude);
@@ -168,15 +270,19 @@ public class ControladorJuego : MonoBehaviour {
         return false;
     }
 
-    public int tirarDadoImpacto(bool conVentaja, bool conDesventaja)
+    public int tirarD20(bool conVentaja, bool conDesventaja)
     {
         int tirada = D20.tirarDados(1);
         int aux = D20.tirarDados(1);
-
-        if ((conVentaja && aux > tirada) || (conDesventaja && aux < tirada))
+        
+        if (conVentaja != conDesventaja)
         {
-             tirada = aux;
+            if ((conVentaja && aux > tirada) || (conDesventaja && aux < tirada))
+            {
+                tirada = aux;
+            }
         }
+        
 
         return tirada;
     }
