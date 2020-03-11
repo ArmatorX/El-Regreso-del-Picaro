@@ -94,10 +94,11 @@ namespace Tests
             estadosPersonaje3.Add(paralizado);
 
             // Creo los personajes.
+            /*
             personajeNormal = new Personaje(casillero, vida, nombre, modificadorVidaMáxima, comidaActual1, experienciaActual, estadosPersonaje1, false, false);
             personajeConfundido = new Personaje(casillero, vida, nombre, modificadorVidaMáxima, comidaActual2, experienciaActual, estadosPersonaje2, false, false);
             personajeConfundidoYParalizado = new Personaje(casillero, vida, nombre, modificadorVidaMáxima, comidaActual3, experienciaActual, estadosPersonaje3, false, false);
-
+            */
             // Inicializo los datos de salida.
             cantidadEstadosPersonaje1 = 1;
             cantidadEstadosPersonaje2 = 1;

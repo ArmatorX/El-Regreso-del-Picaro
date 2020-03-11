@@ -107,4 +107,47 @@ public class Equipo
         }
         return 2;
     }
+
+    public int obtenerModificadoresEquipoParaDefensa()
+    {
+        int modificador = 0;
+
+        modificador += obtenerModificadorArmaduraEquipada();
+
+        modificador += obtenerModificadorDefensaAnillosEquipados();
+
+        return modificador;
+    }
+
+    public bool hayArmaduraEquipada()
+    {
+        return armaduraEquipada != null;
+    }
+
+    public int obtenerModificadorArmaduraEquipada()
+    {
+        if (hayArmaduraEquipada())
+        {
+            return ArmaduraEquipada.ModificadorActual;
+        }
+
+        return 0;
+    }
+
+    public int obtenerModificadorDefensaAnillosEquipados()
+    {
+        int modificador = 0;
+
+        if (hayAnillo1Equipado())
+        {
+            modificador += Anillo1Equipado.ModificadorDefensa;
+        }
+
+        if (hayAnillo2Equipado())
+        {
+            modificador += Anillo2Equipado.ModificadorDefensa;
+        }
+
+        return modificador;
+    }
 }

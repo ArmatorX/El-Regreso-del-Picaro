@@ -17,7 +17,7 @@ public class Personaje : Entidad
     public static int COMIDA_MOVIMIENTO = 5;
     public static int COMIDA_ATAQUE_MELÉ = 10;
     private static float TIEMPO_MOVIMIENTO = 0.05f;
-    private static float MAX_DELTA_MOVIMIENTO = PantallaJuego.UNIDAD_MOVIMIENTO / TIEMPO_MOVIMIENTO;
+    //private static float MAX_DELTA_MOVIMIENTO = PantallaJuego.UNIDAD_MOVIMIENTO / TIEMPO_MOVIMIENTO;
 
     // Atributos
     /// <value>El nombre que se le colocó al personaje.</value>
@@ -36,17 +36,12 @@ public class Personaje : Entidad
     private Nivel nivelActual;
     /// <value>Lista de estados en los que se encuentra actualmente el personaje.</value>
     private List<EstadoPersonaje> estados;
-    private bool ventaja;
-    private bool desventaja;
     private Equipo equipoActual;
-    private bool esAtaqueCrítico;
-
-    // Físicas
-    private Rigidbody2D rigidBody2D;
-    private bool seEstáMoviendo;
-    private ControladorJuego controlador;
+    private Rigidbody2D rb;
+    private Animator animaciones;
 
     // Métodos
+    /*
     public Personaje(Piso ubicación, int vidaActual, string nombre, int modificadorVidaMáxima, int comidaActual, int experienciaActual, List<EstadoPersonaje> estados, bool ventaja, bool desventaja)
         : base(ubicación, vidaActual)
     {
@@ -58,22 +53,17 @@ public class Personaje : Entidad
         this.ventaja = ventaja;
         this.desventaja = desventaja;
     }
+    */
     public string Nombre { get => nombre; set => nombre = value; }
     public int ModificadorVidaMáxima { get => modificadorVidaMáxima; set => modificadorVidaMáxima = value; }
     public int ComidaActual { get => comidaActual; set => comidaActual = value; }
     public int ExperienciaActual { get => experienciaActual; set => experienciaActual = value; }
     public List<EstadoPersonaje> Estados { get => estados; set => estados = value; }
-    public bool Ventaja {
-        get => ventaja;
-        set => ventaja = value && !desventaja;
-    }
-    public bool Desventaja {
-        get => desventaja;
-        set => desventaja = value && !ventaja; }
-    public ControladorJuego Controlador { get => controlador; set => controlador = value; }
     public Equipo EquipoActual { get => equipoActual; set => equipoActual = value; }
     public Nivel NivelActual { get => nivelActual; set => nivelActual = value; }
-    public bool EsAtaqueCrítico { get => esAtaqueCrítico; set => esAtaqueCrítico = value; }
+    public Rigidbody2D RB { get => rb == null ? GetComponent<Rigidbody2D>() : rb; set => rb = value; }
+    public Animator Animaciones { get => animaciones == null ? GetComponent<Animator>() : animaciones; set => animaciones = value; }
+
 
     /**
      * <summary>
@@ -90,10 +80,8 @@ public class Personaje : Entidad
 
         // Muestro la animación del movimiento del personaje.
         Controlador.mostrarAnimaciónMovimientoPersonaje(dirección);
-        /*
-        // Cambio la posición del personaje en Unity.
-        IEnumerator corrutina = movimientoSuavizado(dirección);
 
+        /*
         StartCoroutine(corrutina);
         */
         //rigidBody2D.position += (Vector2) dirección;
@@ -190,24 +178,29 @@ public class Personaje : Entidad
         {
             daño = calcularDaño(obtenerModificadorFuerza(modificadorMisceláneo));
 
+            if (daño <= 0)
+            {
+                daño = 1;
+            }
+
             if (EsAtaqueCrítico)
             {
                 daño *= 2;
             }
         }
 
-        realizarAtaque(impacto, daño, EsAtaqueCrítico);
+        bool impacta = realizarAtaque(impacto, daño, EsAtaqueCrítico);
 
         consumirComida(COMIDA_ATAQUE_MELÉ);
 
-        Controlador.mostrarAnimaciónAtaqueCuerpoACuerpoPersonaje(daño, EsAtaqueCrítico);
+        Controlador.mostrarAnimaciónAtaqueCuerpoACuerpoPersonaje(impacta, daño, EsAtaqueCrítico);
 
         EsAtaqueCrítico = false;
     }
 
-    public void realizarAtaque(int impacto, int daño, bool esCrítico)
+    public bool realizarAtaque(int impacto, int daño, bool esCrítico)
     {
-        Controlador.realizarAtaque(impacto, daño, esCrítico);
+        return Controlador.realizarAtaque(impacto, daño, esCrítico);
     }
 
     public int calcularDaño(int modificador)
@@ -224,27 +217,7 @@ public class Personaje : Entidad
         return EquipoActual.armaEquipadaEstáVorpalizada();
     }
 
-    public int calcularImpacto(int modificadorMisceláneo)
-    {
-        int impacto = 0;
-
-        impacto += Controlador.tirarD20(Ventaja, Desventaja);
-
-        if (impacto == 20)
-        {
-            EsAtaqueCrítico = true;
-        }
-        else
-        {
-            EsAtaqueCrítico = false;
-        }
-
-        impacto += obtenerModificadorFuerza(modificadorMisceláneo);
-
-        return impacto;
-    }
-
-    public int obtenerModificadorFuerza(int modificadorMisceláneo)
+    public override int obtenerModificadorFuerza(int modificadorMisceláneo)
     {
         int modificador = 0;
         modificador += obtenerModificadorFuerzaBase();
@@ -267,8 +240,7 @@ public class Personaje : Entidad
     void Start()
     {
         // Inicializo los atributos
-        rigidBody2D = GetComponent<Rigidbody2D>();
-        Controlador = GameObject.Find("ControladorJuego").GetComponent<ControladorJuego>();
+        //rigidBody2D = GetComponent<Rigidbody2D>();
 
         ModificadorVidaMáxima = 0;
         ComidaActual = 100;
@@ -277,9 +249,9 @@ public class Personaje : Entidad
         Estados.Add(new EstadoPersonaje(EstadosPersonaje.NORMAL));
 
         Ubicación = new Piso(this.transform.position);
-        VidaActual = 100;
+        VidaActual = 10;
 
-        seEstáMoviendo = false;
+        //seEstáMoviendo = false;
 
         EquipoActual = new Equipo();
         Arma arma = new EspadaLarga();
@@ -292,7 +264,11 @@ public class Personaje : Entidad
     // Update is called once per frame
     void Update()
     {
-
+        if (Estados[0].Nombre == EstadosPersonaje.MUERTO)
+        {
+            Destroy(gameObject);
+            Controlador.Personaje = null;
+        }
     }
 
     /// <summary>
@@ -312,5 +288,39 @@ public class Personaje : Entidad
             }
         }
         return false;
+    }
+
+    public override void recibirDaño(int daño)
+    {
+        base.recibirDaño(daño);
+
+        if (VidaActual == 0)
+        {
+            Estados.Clear();
+            Estados.Add(new EstadoPersonaje(EstadosPersonaje.MUERTO));
+        }
+    }
+
+    public override bool verificarSiAtaqueImpacta(int impacto, bool esCrítico)
+    {
+        return impacto >= obtenerDefensa() || esCrítico;
+    }
+
+    public int obtenerDefensa()
+    {
+        int defensa = 0;
+        defensa += obtenerDefensaBase();
+        defensa += obtenerModificadoresEquipoParaDefensa();
+        return defensa;
+    }
+
+    public int obtenerModificadoresEquipoParaDefensa()
+    {
+        return EquipoActual.obtenerModificadoresEquipoParaDefensa();
+    }
+
+    public int obtenerDefensaBase()
+    {
+        return NivelActual.obtenerDefensaBase();
     }
 }

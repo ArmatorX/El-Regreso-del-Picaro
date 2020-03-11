@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -40,5 +41,10 @@ public class Nivel
     public int obtenerCantidadDadosDaño()
     {
         return Estadísticas.CantidadDadosDaño;
+    }
+
+    internal int obtenerDefensaBase()
+    {
+        return Estadísticas.Defensa;
     }
 }

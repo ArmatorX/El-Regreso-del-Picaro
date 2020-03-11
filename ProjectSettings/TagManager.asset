@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Mapa
   - Enemigo
+  - Escalera
   layers:
   - Default
   - TransparentFX
@@ -17,8 +18,8 @@ TagManager:
   - 
   - Entidades
   - Calabozo
+  - "ObjetosEst\xE1ticos"
   - Fondo
-  - 
   - 
   - 
   - 
@@ -42,4 +43,22 @@ TagManager:
   m_SortingLayers:
   - name: Default
     uniqueID: 0
+    locked: 0
+  - name: Fondo
+    uniqueID: 3415249291
+    locked: 0
+  - name: Calabozo
+    uniqueID: 3439531207
+    locked: 0
+  - name: "ObjetosEst\xE1ticos"
+    uniqueID: 1755014671
+    locked: 0
+  - name: Entidades
+    uniqueID: 149712929
+    locked: 0
+  - name: ParedesCalabozo
+    uniqueID: 739925777
+    locked: 0
+  - name: UI
+    uniqueID: 4089433163
     locked: 0

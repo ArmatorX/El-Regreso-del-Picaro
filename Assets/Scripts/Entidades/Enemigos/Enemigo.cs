@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Enemigo : Entidad
+public abstract class Enemigo : Entidad
 {
     private List<EstadoEnemigo> estados;
     private int experienciaQueSuelta;
@@ -15,6 +15,7 @@ public class Enemigo : Entidad
     private int magia;
     private Dado dadoDañoAtaqueBase;
     private int cantidadDadosDañoAtaqueBase;
+    private Rigidbody2D rb;
 
     public List<EstadoEnemigo> Estados { get => estados; set => estados = value; }
     public int ExperienciaQueSuelta { get => experienciaQueSuelta; set => experienciaQueSuelta = value; }
@@ -26,9 +27,10 @@ public class Enemigo : Entidad
     public int Magia { get => magia; set => magia = value; }
     public Dado DadoDañoAtaqueBase { get => dadoDañoAtaqueBase; set => dadoDañoAtaqueBase = value; }
     public int CantidadDadosDañoAtaqueBase { get => cantidadDadosDañoAtaqueBase; set => cantidadDadosDañoAtaqueBase = value; }
+    public Rigidbody2D RB { get => rb == null ? rb = GetComponent<Rigidbody2D>() : rb; set => rb = value; }
 
     //private Recompensa recompensa;
-
+    /*
     public Enemigo(Piso ubicación, int vidaActual, List<EstadoEnemigo> estados, int experienciaQueSuelta, int dificultad, int vidaMáxima, int fuerza, int destreza, int defenza, int magia, Dado dadoDañoAtaqueBase, int cantidadDadosDañoAtaqueBase)
         : base(ubicación, vidaActual)
     {
@@ -43,31 +45,9 @@ public class Enemigo : Entidad
         this.DadoDañoAtaqueBase = dadoDañoAtaqueBase;
         this.CantidadDadosDañoAtaqueBase = cantidadDadosDañoAtaqueBase;
     }
+    */
 
-    public override void moverse(Vector3 dirección)
-    {
-        throw new System.NotImplementedException();
-    }
 
-    // Start is called before the first frame update
-    void Start()
-    {
-        Estados = new List<EstadoEnemigo>();
-        Estados.Add(new EstadoEnemigo(EstadosEnemigo.NORMAL));
-
-        VidaMáxima = 10;
-        VidaActual = VidaMáxima;
-        Defensa = 0;
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        if (Estados[0].Nombre == EstadosEnemigo.MUERTO)
-        {
-            Destroy(gameObject);
-        }
-    }
 
     public bool verificarSiEstáEnEstado(EstadosEnemigo estado)
     {
@@ -82,30 +62,27 @@ public class Enemigo : Entidad
         return false;
     }
 
-    public bool verificarSiAtaqueImpacta(int impacto, bool esCrítico)
+    public override bool verificarSiAtaqueImpacta(int impacto, bool esCrítico)
     {
         return impacto >= Defensa || esCrítico;
     }
 
-    public void recibirAtaque(int impacto, int daño, bool esCrítico)
+    public override void recibirDaño(int daño)
     {
-        if (verificarSiAtaqueImpacta(impacto, esCrítico))
-        {
-            recibirDaño(daño);
-        }
-    }
+        base.recibirDaño(daño);
 
-    public void recibirDaño(int daño)
-    {
-        if (VidaActual <= daño)
+        if (VidaActual == 0)
         {
-            VidaActual = 0;
             Estados.Clear();
             Estados.Add(new EstadoEnemigo(EstadosEnemigo.MUERTO));
         }
-        else
-        {
-            VidaActual -= daño;
-        }
+    }
+
+    
+    public abstract void usarTurno();
+    public abstract void atacar();
+    public override void moverse(Vector3 dirección)
+    {
+        Controlador.mostrarAnimaciónMovimientoEnemigo(dirección, this);
     }
 }

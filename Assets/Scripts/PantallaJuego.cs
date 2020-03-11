@@ -19,19 +19,14 @@ public class PantallaJuego : MonoBehaviour
     private ControladorJuego controlador;
     /// <value>El objeto personaje de Unity.</value>
     /// <remarks>Necesario para activar las animaciones.</remarks>
-    private Rigidbody2D personajeRB;
+    private Personaje personaje;
+    private bool animaciónEnProgreso;
 
-    public static float UNIDAD_MOVIMIENTO = 1f;
+    private static float TIEMPO_ANIMACIÓN_MOVIMIENTO = 0.2f;
 
-    // Método
-    public PantallaJuego(ControladorJuego controlador, Rigidbody2D personaje)
-    {
-        this.controlador = controlador;
-        this.personajeRB = personaje;
-    }
-
-    public ControladorJuego Controlador { get => controlador; set => controlador = value; }
-    public Rigidbody2D PersonajeRB { get => personajeRB == null ? personajeRB = GameObject.Find("Personaje").GetComponent<Rigidbody2D>() : personajeRB; set => personajeRB = value; }
+    public ControladorJuego Controlador { get => controlador == null ? controlador = GameObject.Find("ControladorJuego").GetComponent<ControladorJuego>() : controlador; set => controlador = value; }
+    public Personaje Personaje { get => personaje == null ? personaje = GameObject.Find("Personaje").GetComponent<Personaje>() : personaje; set => personaje = value; }
+    public bool AnimaciónEnProgreso { get => animaciónEnProgreso; set => animaciónEnProgreso = value; }
 
     /**
      * <summary>
@@ -41,7 +36,7 @@ public class PantallaJuego : MonoBehaviour
      */
     public void moverPersonaje(Vector3 dirección)
     {
-        controlador.moverPersonaje(dirección);
+        Controlador.moverPersonaje(dirección);
     }
 
     /**
@@ -57,19 +52,19 @@ public class PantallaJuego : MonoBehaviour
 
         if (Input.GetButtonDown("Up"))
         {
-            dirección = Vector3.up * UNIDAD_MOVIMIENTO;
+            dirección = Vector3.up;
         }
         else if (Input.GetButtonDown("Down"))
         {
-            dirección = Vector3.down * UNIDAD_MOVIMIENTO;
+            dirección = Vector3.down;
         }
         else if (Input.GetButtonDown("Right"))
         {
-            dirección = Vector3.right * UNIDAD_MOVIMIENTO;
+            dirección = Vector3.right;
         }
         else if (Input.GetButtonDown("Left"))
         {
-            dirección = Vector3.left * UNIDAD_MOVIMIENTO;
+            dirección = Vector3.left;
         }
         else
         {
@@ -79,56 +74,185 @@ public class PantallaJuego : MonoBehaviour
         return dirección;
     }
 
+    public void mostrarAnimaciónMovimientoEnemigo(Vector3 dirección, Enemigo enemigo)
+    {
+        IEnumerator corrutinaAnimación = animaciónMovimientoEnemigo(enemigo.RB.position + (Vector2)dirección, enemigo);
+
+        StartCoroutine(corrutinaAnimación);
+    }
+
+    public IEnumerator animaciónMovimientoEnemigo(Vector2 destino, Enemigo enemigo)
+    {
+        AnimaciónEnProgreso = true;
+
+
+        for (int i = 1; (destino - enemigo.RB.position).magnitude > Mathf.Epsilon; i++)
+        {
+            Vector2 mov = Vector2.Lerp(enemigo.RB.position, destino, (Time.deltaTime / TIEMPO_ANIMACIÓN_MOVIMIENTO) * i);
+
+            enemigo.RB.position = mov;
+
+            //Debug.Log(i);
+
+            yield return null;
+        }
+
+        AnimaciónEnProgreso = false;
+    }
+
     // Start is called before the first frame update
     void Start()
     {
-        // Inicializo el controlador
-        controlador = GameObject.Find("ControladorJuego").GetComponent<ControladorJuego>();
+        AnimaciónEnProgreso = false;
     }
 
     // Update is called once per frame
     void Update()
     {
-        // Controlar si el jugador quiere moverse.
-        if (Input.anyKeyDown)
+        if (!AnimaciónEnProgreso)
         {
-            // Obtengo la dirección movimiento.
-            Vector3 dirección = obtenerDirecciónMovimiento();
-
-            if (dirección != Vector3.zero)
+            // Controlar si el jugador quiere moverse.
+            if (Input.anyKeyDown)
             {
-                // Muevo al personaje en la dirección correspondiente.
-                moverPersonaje(dirección);
+                // Obtengo la dirección movimiento.
+                Vector3 dirección = obtenerDirecciónMovimiento();
+
+                if (dirección != Vector3.zero)
+                {
+                    // Muevo al personaje en la dirección correspondiente.
+                    moverPersonaje(dirección);
+                }
+                else if (Input.GetButtonDown("GoDown"))
+                {
+                    bajarEscaleras();
+                }
             }
-            
         }
+    }
+
+    public void bajarEscaleras()
+    {
+        Controlador.bajarEscaleras();
     }
 
     public void mostrarAnimaciónMovimientoPersonaje(Vector3 dirección)
     {
-        PersonajeRB.position += (Vector2) dirección;
+        IEnumerator corrutinaAnimación = animaciónMovimientoPersonaje(Personaje.RB.position + (Vector2)dirección);
+
+        StartCoroutine(corrutinaAnimación);
     }
 
-    public void mostrarAnimaciónAtaqueCuerpoACuerpoPersonaje(Vector3 dirección, Enemigo objetivo, int dañoRealizado, bool esCrítico)
+    public IEnumerator animaciónMovimientoPersonaje(Vector2 destino)
     {
-        Debug.Log(dirección);
-        Debug.Log(objetivo.VidaActual);
-        Debug.Log(dañoRealizado);
-        Debug.Log(esCrítico);
+        //if (AnimaciónPersonaje)
+        //{
+        //    yield return new WaitForSeconds(TIEMPO_ANIMACIÓN / 2);
+
+        //    IEnumerator corrutinaAnimación = animaciónMovimientoPersonaje(destino);
+
+        //    StartCoroutine(corrutinaAnimación);
+        //}
+        //else
+        //{
+        AnimaciónEnProgreso = true;
+        int facing = (int) (destino - Personaje.RB.position).x;
+
+        if (facing != 0)
+        {
+            Personaje.transform.localScale = new Vector3(facing * 6.25f, 6.25f, 1);
+        }
+
+        Personaje.Animaciones.SetInteger("estado", 1);
+
+        for (int i = 1; (destino - Personaje.RB.position).magnitude > Mathf.Epsilon; i++)
+        {
+            Vector2 mov = Vector2.Lerp(Personaje.RB.position, destino, (Time.deltaTime / TIEMPO_ANIMACIÓN_MOVIMIENTO) * i);
+
+            Personaje.RB.position = mov;
+
+            //Debug.Log(i);
+
+            yield return null;
+        }
+
+        Personaje.Animaciones.SetInteger("estado", 0);
+        AnimaciónEnProgreso = false;
+        //}
     }
 
-    internal void mostrarExcepcion(Exception e)
+    public void mostrarAnimaciónAtaqueCuerpoACuerpoPersonaje(bool impacta, Vector3 dirección, Enemigo objetivo, int dañoRealizado, bool esCrítico)
+    {
+        if (impacta)
+        {
+            if (esCrítico)
+            {
+                Debug.Log("El ataque fue CRÍTICO, realizando " + dañoRealizado + " puntos de daño y dejó al enemigo con " + objetivo.VidaActual + " puntos de vida.");
+            }
+            else
+            {
+                Debug.Log("El ataque impacta por " + dañoRealizado + " puntos de daño y dejó al enemigo con " + objetivo.VidaActual + " puntos de vida.");
+            }
+        }
+        else
+        {
+            Debug.Log("El ataque falló.");
+        }
+       
+    }
+
+    public void mostrarExcepcion(Exception e)
     {
         throw new NotImplementedException();
     }
 
-    internal void mostrarAtaquePersonajeFalla()
+    public void mostrarAtaquePersonajeFalla()
     {
         throw new NotImplementedException();
     }
 
-    internal void mostrarMovimientoPersonajeFalla()
+    public void mostrarMovimientoPersonajeFalla(Vector3 dirección)
     {
-        throw new NotImplementedException();
+        AnimaciónEnProgreso = true;
+        int facing = (int) dirección.x;
+
+        if (facing != 0)
+        {
+            Personaje.transform.localScale = new Vector3(facing * 6.25f, 6.25f, 1);
+        }
+
+        Personaje.Animaciones.SetInteger("estado", 1);
+        /*
+        for (int i = 1; (destino - Personaje.RB.position).magnitude > Mathf.Epsilon; i++)
+        {
+            Vector2 mov = Vector2.Lerp(Personaje.RB.position, destino, (Time.deltaTime / TIEMPO_ANIMACIÓN_MOVIMIENTO) * i);
+
+            Personaje.RB.position = mov;
+
+            //Debug.Log(i);
+
+            yield return null;
+        }
+        */
+        Personaje.Animaciones.SetInteger("estado", 0);
+        AnimaciónEnProgreso = false;
+    }
+
+    public void mostrarAnimaciónAtaqueMurciélago(bool impacta, Personaje objetivo, int dañoRealizado, bool esCrítico)
+    {
+        if (impacta)
+        {
+            if (esCrítico)
+            {
+                Debug.Log("El ataque fue CRÍTICO, realizando " + dañoRealizado + " puntos de daño y dejó al personaje con " + objetivo.VidaActual + " puntos de vida.");
+            }
+            else
+            {
+                Debug.Log("El ataque impacta por " + dañoRealizado + " puntos de daño y dejó al personaje con " + objetivo.VidaActual + " puntos de vida.");
+            }
+        }
+        else
+        {
+            Debug.Log("El ataque falló.");
+        }
     }
 }

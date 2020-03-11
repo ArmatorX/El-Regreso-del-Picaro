@@ -4,6 +4,10 @@ using UnityEngine;
 
 public class Armadura : MonoBehaviour
 {
+    private int modificadorActual;
+
+    public int ModificadorActual { get => modificadorActual; set => modificadorActual = value; }
+
     // Start is called before the first frame update
     void Start()
     {
