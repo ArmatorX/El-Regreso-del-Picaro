@@ -4,83 +4,19 @@ using UnityEngine;
 
 public class Serpiente : Enemigo
 {
-    private Vector3 direcciónAnterior;
+    private Vector2 direcciónAnterior;
+    public Vector2 DirecciónAnterior { get => direcciónAnterior; set => direcciónAnterior = value; }
 
-    public Vector3 DirecciónAnterior { get => direcciónAnterior; set => direcciónAnterior = value; }
-
-    public override void usarTurno()
-    {
-        if (estoyAdyacenteAlPersonaje())
-        {
-            //Debug.Log("Atacar");
-            atacar();
-        }
-        else
-        {
-            //Debug.Log("Moverse");
-            Vector3 dirección = elegirDirecciónMovimiento();
-
-            if (dirección != Vector3.back)
-            {
-                //Debug.Log("Pude moverme");
-                moverse(dirección);
-            }
-        }
-    }
-
-    public override void atacar()
-    {
-        int impacto = calcularImpacto(0);
-        int daño = 0;
-
-        daño = calcularDaño(obtenerModificadorFuerza(0));
-
-        if (EsAtaqueCrítico)
-        {
-            daño *= 2;
-        }
-
-        bool impacta = realizarAtaque(impacto, daño, EsAtaqueCrítico);
-
-        Controlador.mostrarAnimaciónAtaqueMurciélago(impacta, daño, EsAtaqueCrítico);
-
-
-        EsAtaqueCrítico = false;
-        return;
-    }
-
-    public bool realizarAtaque(int impacto, int daño, bool esAtaqueCrítico)
-    {
-        return Controlador.realizarAtaque(impacto, daño, esAtaqueCrítico);
-    }
-
-    public override int obtenerModificadorFuerza(int modificadorMisceláneo)
-    {
-        return Fuerza + modificadorMisceláneo;
-    }
-
-    public int calcularDaño(int modificador)
-    {
-        int dañoBase = DadoDañoAtaqueBase.tirarDados(CantidadDadosDañoAtaqueBase);
-        return dañoBase + modificador;
-    }
-
-    public bool estoyAdyacenteAlPersonaje()
-    {
-        return Controlador.verificarSiEnemigoEstáAdyacenteAPersonaje(this);
-    }
-
-    public Vector3 elegirDirecciónMovimiento()
+    public override Vector2 elegirDirecciónMovimiento()
     {
         int nro = Controlador.tirarD20(false, false);
 
-        if (DirecciónAnterior == Vector3.zero || nro > 4 || Controlador.verificarSiElCaminoEstáObstruido(DirecciónAnterior, this))
+        if (DirecciónAnterior == Vector2.zero || nro > 4 || Controlador.hayObstáculoEn((Vector2) this.transform.position + DirecciónAnterior))
         {
-            DirecciónAnterior = Controlador.obtenerDirecciónAleatoria(this);
+            DirecciónAnterior = Controlador.obtenerDirecciónAleatoria(this.transform.position, Tamaño, true);
         }
 
         return DirecciónAnterior;
-
     }
 
     // Start is called before the first frame update
@@ -89,6 +25,7 @@ public class Serpiente : Enemigo
         Estados = new List<EstadoEnemigo>();
         Estados.Add(new EstadoEnemigo(EstadosEnemigo.NORMAL));
 
+        Tamaño = TamañoEntidad.NORMAL;
         VidaMáxima = 10;
         VidaActual = VidaMáxima;
         Defensa = 5;
@@ -100,7 +37,6 @@ public class Serpiente : Enemigo
 
         Ventaja = false;
         Desventaja = false;
-        EsAtaqueCrítico = false;
     }
 
     // Update is called once per frame

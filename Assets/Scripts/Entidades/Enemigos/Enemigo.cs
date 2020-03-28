@@ -47,9 +47,7 @@ public abstract class Enemigo : Entidad
     }
     */
 
-
-
-    public bool verificarSiEstáEnEstado(EstadosEnemigo estado)
+    public bool estáEnEstado(EstadosEnemigo estado)
     {
         foreach (EstadoEnemigo estadoAux in Estados)
         {
@@ -62,9 +60,9 @@ public abstract class Enemigo : Entidad
         return false;
     }
 
-    public override bool verificarSiAtaqueImpacta(int impacto, bool esCrítico)
+    public override bool verificarSiAtaqueImpacta(int impacto)
     {
-        return impacto >= Defensa || esCrítico;
+        return impacto >= Defensa || impacto == -1;
     }
 
     public override void recibirDaño(int daño)
@@ -78,11 +76,73 @@ public abstract class Enemigo : Entidad
         }
     }
 
-    
-    public abstract void usarTurno();
-    public abstract void atacar();
-    public override void moverse(Vector3 dirección)
+    public virtual void usarTurno()
     {
-        Controlador.mostrarAnimaciónMovimientoEnemigo(dirección, this);
+        if (estoyAdyacenteAlPersonaje())
+        {
+            realizarAtaqueMelé();
+        }
+        else
+        {
+            Vector2 dirección = elegirDirecciónMovimiento();
+
+            if (dirección != null)
+            {
+                moverse(dirección);
+            }
+        }
+    }
+    public virtual void realizarAtaqueMelé()
+    {
+        int impacto = calcularImpacto(0);
+        int daño;
+        byte tipo = 1;
+
+        daño = calcularDaño(obtenerModificadorFuerza(0));
+
+        if (impacto == -1)
+        {
+            daño *= 2;
+            tipo = 2;
+        }
+
+        if (!realizarAtaque(impacto, daño))
+        {
+            tipo = 0;
+        }
+
+        Controlador.animaciónAtaqueMeléEnemigo(this, daño, tipo);
+    }
+
+    public override void moverse(Vector2 dirección)
+    {
+        Controlador.animaciónMovimientoEnemigo(this, dirección);
+    }
+    public bool estoyAdyacenteAlPersonaje()
+    {
+        return Controlador.estáAdyacenteAlPersonaje(this, Tamaño);
+    }
+
+    public bool realizarAtaque(int impacto, int daño)
+    {
+        return Controlador.realizarAtaque(Controlador.Personaje, impacto, daño);
+    }
+
+    public int calcularDaño(int modificador)
+    {
+        int dañoBase = DadoDañoAtaqueBase.tirarDados(CantidadDadosDañoAtaqueBase);
+        return dañoBase + modificador;
+    }
+
+    public override int obtenerModificadorFuerza(int modificadorMisceláneo)
+    {
+        return Fuerza + modificadorMisceláneo;
+    }
+
+    public abstract Vector2 elegirDirecciónMovimiento();
+
+    public override bool esEnemigo()
+    {
+        return true;
     }
 }

@@ -73,79 +73,15 @@ public class Personaje : Entidad
      * </summary>
      * <param name="dirección">La dirección en la que se quiere mover el personaje.</param>
      */
-    public override void moverse(Vector3 dirección)
+    public override void moverse(Vector2 dirección)
     {
         // Consumo los puntos de comida del movimiento.
         consumirComida(COMIDA_MOVIMIENTO);
 
         // Muestro la animación del movimiento del personaje.
-        Controlador.mostrarAnimaciónMovimientoPersonaje(dirección);
-
-        /*
-        StartCoroutine(corrutina);
-        */
-        //rigidBody2D.position += (Vector2) dirección;
-        // Obtengo el casillero de destino.
-        // Piso casilleroDestino = controlador.obtenerCasilleroDestino(Ubicación, dirección);
-
-        // Actualizo la ubicación del personaje.
-        // Ubicación = casilleroDestino;
+        Controlador.animaciónMovimientoPersonaje(dirección);
     }
 
-    /**
-     * <summary>
-     * Cambia la posición del personaje poco a poco, hasta que llega al destino.
-     * </summary>
-     * <param name="dirección">La dirección en que se quiere mover el personaje.</param>
-     * <returns>Es un IEnumerator porque es una corrutina.</returns>
-     */
-    /*
-   protected IEnumerator movimientoSuavizado(Vector3 dirección)
-   {
-       if (seEstáMoviendo)
-       {
-           // Si se está moviendo que espere hasta que termine.
-           yield return new WaitForSeconds(TIEMPO_MOVIMIENTO / 4f);
-
-           // Intenta moverte nuevamente.
-           IEnumerator corrutina = movimientoSuavizado(dirección);
-
-           StartCoroutine(corrutina);
-       }
-       else
-       {
-           // Obtengo la posición de destino.
-           Vector3 destino = this.transform.position + dirección;
-
-           // Calculo la distancia restante.
-           float distanciaRestante = (this.transform.position - destino).sqrMagnitude;
-
-           while (distanciaRestante > 0.001)
-           {
-               // Deshabilito el movimiento.
-               seEstáMoviendo = true;
-
-               // Calculo la nueva posición a la que se va a mover el personaje.
-               Vector3 nuevaPosición = Vector3.MoveTowards(rigidBody2D.position, destino, MAX_DELTA_MOVIMIENTO * Time.fixedDeltaTime);
-
-               // Muevo el personaje a la posición calculada.
-               rigidBody2D.MovePosition(nuevaPosición);
-
-               // Vuelvo a calcular la distancia restante.
-               distanciaRestante = (this.transform.position - destino).sqrMagnitude;
-
-               // Salta un frame, y continúa el loop hasta que está en un valor cercano a la posición de destino.
-               yield return null;
-           }
-
-           // Pongo la posición del personaje en el lugar de destino.
-           rigidBody2D.position = destino;
-
-           // Habilito nuevamente el movimiento.
-           seEstáMoviendo = false;
-       }
-   }
-   */
     /**
      * <summary>
      * Consume una determinada cantidad de puntos de comida del personaje.
@@ -169,10 +105,11 @@ public class Personaje : Entidad
         }
     }
 
-    public void atacarCuerpoACuerpo(Enemigo enemigo, int modificadorMisceláneo)
+    public void atacarCuerpoACuerpo(Entidad objetivo, int modificadorMisceláneo)
     {
         int impacto = calcularImpacto(modificadorMisceláneo);
         int daño = 0;
+        byte tipo = 1;
 
         if (!armaEquipadaEstáVorpalizada())
         {
@@ -183,24 +120,27 @@ public class Personaje : Entidad
                 daño = 1;
             }
 
-            if (EsAtaqueCrítico)
+            if (impacto == -1)
             {
                 daño *= 2;
+                tipo = 2;
             }
         }
 
-        bool impacta = realizarAtaque(impacto, daño, EsAtaqueCrítico);
+
+        if (!realizarAtaque(objetivo, impacto, daño))
+        {
+            tipo = 0;
+        }
 
         consumirComida(COMIDA_ATAQUE_MELÉ);
 
-        Controlador.mostrarAnimaciónAtaqueCuerpoACuerpoPersonaje(impacta, daño, EsAtaqueCrítico);
-
-        EsAtaqueCrítico = false;
+        Controlador.animaciónAtaqueMeléPersonaje(objetivo, daño, tipo);
     }
 
-    public bool realizarAtaque(int impacto, int daño, bool esCrítico)
+    public bool realizarAtaque(Entidad objetivo, int impacto, int daño)
     {
-        return Controlador.realizarAtaque(impacto, daño, esCrítico);
+        return Controlador.realizarAtaque(objetivo, impacto, daño);
     }
 
     public int calcularDaño(int modificador)
@@ -242,6 +182,7 @@ public class Personaje : Entidad
         // Inicializo los atributos
         //rigidBody2D = GetComponent<Rigidbody2D>();
 
+        Tamaño = TamañoEntidad.NORMAL;
         ModificadorVidaMáxima = 0;
         ComidaActual = 100;
         ExperienciaActual = 0;
@@ -278,7 +219,7 @@ public class Personaje : Entidad
     /// <param name="estado">Nombre del estado alterado.</param>
     /// <returns>Verdadero si el personaje está en el estado
     /// alterado.</returns>
-    public bool verificarSiEstáEnEstado(EstadosPersonaje estado)
+    public bool estáEnEstado(EstadosPersonaje estado)
     {
         foreach (EstadoPersonaje estadoAux in Estados)
         {
@@ -301,9 +242,9 @@ public class Personaje : Entidad
         }
     }
 
-    public override bool verificarSiAtaqueImpacta(int impacto, bool esCrítico)
+    public override bool verificarSiAtaqueImpacta(int impacto)
     {
-        return impacto >= obtenerDefensa() || esCrítico;
+        return impacto >= obtenerDefensa() || impacto == -1;
     }
 
     public int obtenerDefensa()
@@ -322,5 +263,10 @@ public class Personaje : Entidad
     public int obtenerDefensaBase()
     {
         return NivelActual.obtenerDefensaBase();
+    }
+
+    public override bool esEnemigo()
+    {
+        return false;
     }
 }

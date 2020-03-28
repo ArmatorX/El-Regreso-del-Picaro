@@ -15,8 +15,8 @@ using UnityEngine;
 /// </remarks>
 public interface IComponenteCalabozo 
 {
-    Vector3 Dimensiones { get; set; }
-    Vector3 Posición { get; set; }
+    Vector2 Dimensiones { get; set; }
+    Vector2 Posición { get; set; }
     int NúmeroOrden { get; set; }
 
     /// <summary>
@@ -31,7 +31,7 @@ public interface IComponenteCalabozo
     /// Devuelve null si se usa en una estructura que no contiene 
     /// casilleros, o si la estructura no contiene el casillero de
     /// destino.</returns>
-    Casillero obtenerCasilleroDestino(Casillero casilleroOrigen, Vector3 dirección);
+    Casillero obtenerCasilleroDestino(Casillero casilleroOrigen, Vector2 dirección);
     
     /// <summary>
     /// Ilumina un elemento del calabozo, haciéndolo completamente
@@ -71,5 +71,5 @@ public interface IComponenteCalabozo
     /// <param name="posición">Posición del objeto.</param>
     /// <returns>Componente del calabozo, o null si no encontró 
     /// resultados.</returns>
-    IComponenteCalabozo obtenerHijo(Vector3 posición);
+    IComponenteCalabozo obtenerHijo(Vector2 posición);
 }

@@ -12,6 +12,6 @@ using UnityEngine;
 /// </remarks>
 public class Pared : Casillero
 {
-    public Pared(Vector3 posición)
+    public Pared(Vector2 posición)
        : base(posición) { }
 }

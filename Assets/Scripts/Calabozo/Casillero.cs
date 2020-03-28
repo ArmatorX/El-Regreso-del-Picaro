@@ -5,11 +5,11 @@ using UnityEngine;
 public class Casillero : MonoBehaviour, IComponenteCalabozo
 {
     private int númeroOrden;
-    private Vector3 posición;
+    private Vector2 posición;
     private Visibilidad visibilidad;
     //private ObjetoAgarrable objeto;
 
-    public Casillero(Vector3 posición)
+    public Casillero(Vector2 posición)
     {
         this.posición = posición;
     }
@@ -17,12 +17,12 @@ public class Casillero : MonoBehaviour, IComponenteCalabozo
     /// <summary>
     /// No se guardan las dimensiones del Casillero.
     /// </summary>
-    public Vector3 Dimensiones { 
+    public Vector2 Dimensiones { 
         get => throw new System.InvalidOperationException("No se guardan las dimensiones del Casillero.");
         set => throw new System.InvalidOperationException("No se guardan las dimensiones del Casillero."); 
     }
     public int NúmeroOrden { get => númeroOrden; set => númeroOrden = value; }
-    public Vector3 Posición { get => posición; set => posición = value; }
+    public Vector2 Posición { get => posición; set => posición = value; }
     public Visibilidad Visibilidad { get => visibilidad; set => visibilidad = value; }
 
     /// <summary>
@@ -62,7 +62,7 @@ public class Casillero : MonoBehaviour, IComponenteCalabozo
     /// <param name="casilleroOrigen">-</param>
     /// <param name="dirección">-</param>
     /// <returns>-</returns>
-    public Casillero obtenerCasilleroDestino(Casillero casilleroOrigen, Vector3 dirección)
+    public Casillero obtenerCasilleroDestino(Casillero casilleroOrigen, Vector2 dirección)
     {
         throw new System.InvalidOperationException("Los casilleros no se conocen entre sí.");
     }
@@ -82,7 +82,7 @@ public class Casillero : MonoBehaviour, IComponenteCalabozo
     /// </summary>
     /// <param name="posición">-</param>
     /// <returns>-</returns>
-    public IComponenteCalabozo obtenerHijo(Vector3 posición)
+    public IComponenteCalabozo obtenerHijo(Vector2 posición)
     {
         throw new System.InvalidOperationException("La clase Casillero no tiene hijos. No se pueden obtener hijos.");
     }
@@ -98,7 +98,7 @@ public class Casillero : MonoBehaviour, IComponenteCalabozo
      * <param name="dirección">La dirección en la cual el personaje se quiere mover.</param>
      * <returns>Verdadero si el casillero es el casillero destino.</returns>
      */
-    public bool esCasilleroDestino(Casillero casilleroOrigen, Vector3 dirección)
+    public bool esCasilleroDestino(Casillero casilleroOrigen, Vector2 dirección)
     {
         return (casilleroOrigen.Posición + dirección == this.posición);
     }

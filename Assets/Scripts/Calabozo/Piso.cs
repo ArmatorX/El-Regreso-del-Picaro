@@ -14,6 +14,6 @@ using UnityEngine;
  */
 public class Piso : Casillero
 {
-    public Piso(Vector3 posición)
+    public Piso(Vector2 posición)
         : base(posición) { }
 }

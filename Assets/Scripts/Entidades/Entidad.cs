@@ -20,16 +20,8 @@ public abstract class Entidad : MonoBehaviour
     private ControladorJuego controlador;
     private bool ventaja;
     private bool desventaja;
-    private bool esAtaqueCrítico;
+    private TamañoEntidad tamaño;
 
-    // Métodos
-    /*
-    protected Entidad(Piso ubicación, int vidaActual)
-    {
-        this.ubicación = ubicación;
-        this.vidaActual = vidaActual;
-    }
-    */
     public Piso Ubicación { get => ubicación; set => ubicación = value; }
     public int VidaActual { get => vidaActual; set => vidaActual = value; }
     public ControladorJuego Controlador { get => controlador == null ? GameObject.Find("ControladorJuego").GetComponent<ControladorJuego>() : controlador; set => controlador = value; }
@@ -43,7 +35,7 @@ public abstract class Entidad : MonoBehaviour
         get => desventaja;
         set => desventaja = value && !ventaja;
     }
-    public bool EsAtaqueCrítico { get => esAtaqueCrítico; set => esAtaqueCrítico = value; }
+    public TamañoEntidad Tamaño { get => tamaño; set => tamaño = value; }
 
     public int calcularImpacto(int modificadorMisceláneo)
     {
@@ -53,21 +45,19 @@ public abstract class Entidad : MonoBehaviour
 
         if (impacto == 20)
         {
-            EsAtaqueCrítico = true;
+            impacto = -1;
         }
         else
         {
-            EsAtaqueCrítico = false;
+            impacto += obtenerModificadorFuerza(modificadorMisceláneo);
         }
-
-        impacto += obtenerModificadorFuerza(modificadorMisceláneo);
 
         return impacto;
     }
 
-    public bool recibirAtaque(int impacto, int daño, bool esCrítico)
+    public bool recibirAtaque(int impacto, int daño)
     {
-        if (verificarSiAtaqueImpacta(impacto, esCrítico))
+        if (verificarSiAtaqueImpacta(impacto) || impacto == -1)
         {
             recibirDaño(daño);
             return true;
@@ -94,7 +84,14 @@ public abstract class Entidad : MonoBehaviour
      * </summary>
      * <param name="dirección">La dirección en que se quiere mover la entidad.</param> 
      */
-    public abstract void moverse(Vector3 dirección);
-    public abstract bool verificarSiAtaqueImpacta(int impacto, bool esCrítico);
+    public abstract void moverse(Vector2 dirección);
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="impacto">El impacto del ataque. Si es -1 el ataque impacta 
+    /// siempre.</param>
+    /// <returns></returns>
+    public abstract bool verificarSiAtaqueImpacta(int impacto);
     public abstract int obtenerModificadorFuerza(int modificadorMisceláneo);
+    public abstract bool esEnemigo();
 }

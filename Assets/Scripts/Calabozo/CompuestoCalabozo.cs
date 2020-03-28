@@ -9,15 +9,15 @@ using UnityEngine;
 public class CompuestoCalabozo : IComponenteCalabozo
 {
     private int númeroOrden;
-    private Vector3 dimensiones;
-    private Vector3 posición;
+    private Vector2 dimensiones;
+    private Vector2 posición;
     private List<IComponenteCalabozo> hijos;
     private Visibilidad visibilidad;
     private TipoComponenteCalabozo tipo;
 
 
-    public Vector3 Dimensiones { get => dimensiones; set => dimensiones = value; }
-    public Vector3 Posición { get => posición; set => posición = value; }
+    public Vector2 Dimensiones { get => dimensiones; set => dimensiones = value; }
+    public Vector2 Posición { get => posición; set => posición = value; }
     public int NúmeroOrden { get => númeroOrden; set => númeroOrden = value; }
     public List<IComponenteCalabozo> Hijos { get => hijos; set => hijos = value; }
     public Visibilidad Visibilidad { get => visibilidad; set => visibilidad = value; }
@@ -45,7 +45,7 @@ public class CompuestoCalabozo : IComponenteCalabozo
         throw new System.NotImplementedException();
     }
 
-    public Casillero obtenerCasilleroDestino(Casillero casilleroOrigen, Vector3 dirección)
+    public Casillero obtenerCasilleroDestino(Casillero casilleroOrigen, Vector2 dirección)
     {
         if (this.hijos.Contains(casilleroOrigen))
         {
@@ -63,7 +63,7 @@ public class CompuestoCalabozo : IComponenteCalabozo
         return this.hijos[númeroOrden];
     }
 
-    public IComponenteCalabozo obtenerHijo(Vector3 posición)
+    public IComponenteCalabozo obtenerHijo(Vector2 posición)
     {
         return this.hijos.Find(componente => componente.Posición == posición);
     }
