@@ -43,8 +43,12 @@ public class Nivel
         return Estadísticas.CantidadDadosDaño;
     }
 
-    internal int obtenerDefensaBase()
+    public int obtenerDefensaBase()
     {
         return Estadísticas.Defensa;
+    }
+    public int obtenerVidaMáxima()
+    {
+        return Estadísticas.VidaMáxima;
     }
 }

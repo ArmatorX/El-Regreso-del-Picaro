@@ -251,6 +251,8 @@ public class ControladorJuego : MonoBehaviour {
                 Enemigos.Add(GameObject.Find("Serpiente (10)").GetComponent<Serpiente>());
                 Enemigos.Add(GameObject.Find("Serpiente (11)").GetComponent<Serpiente>());
                 Enemigos.Add(GameObject.Find("Serpiente (12)").GetComponent<Serpiente>());
+
+                EscaleraActual = GameObject.Find("Escalera");
             }
             else if (MapaActual == 2)
             {
@@ -261,6 +263,8 @@ public class ControladorJuego : MonoBehaviour {
                 Enemigos.Add(GameObject.Find("Murciélago (5)").GetComponent<Murciélago>());
                 Enemigos.Add(GameObject.Find("Murciélago (6)").GetComponent<Murciélago>());
                 Enemigos.Add(GameObject.Find("Troll").GetComponent<Troll>());
+
+                //EscaleraActual = GameObject.Find("Escalera");
             }
         }
     }
@@ -348,7 +352,7 @@ public class ControladorJuego : MonoBehaviour {
         Vector2 p2 = posición + new Vector2(0.25f, 0.25f);
         Collider2D collider = Physics2D.OverlapArea(p1, p2);
 
-        if (collider.tag == "Enemigo")
+        if (collider != null && collider.tag == "Enemigo")
         {
             return true;
         }
@@ -377,11 +381,7 @@ public class ControladorJuego : MonoBehaviour {
         Vector2 p2 = posición + new Vector2(0.25f, 0.25f);
         Collider2D collider = Physics2D.OverlapArea(p1, p2);
 
-        if (collider == null)
-        {
-            return false;
-        }
-        else if (collider.tag == "Escalera")
+        if (collider == null || collider.tag == "Escalera")
         {
             return false;
         }
@@ -441,6 +441,21 @@ public class ControladorJuego : MonoBehaviour {
     /// <returns>Dirección aleatoria libre.</returns>
     public Vector2 obtenerDirecciónAleatoria(Vector2 posiciónInicio, TamañoEntidad tamaño, bool controlarParedes = false)
     {
+        List<Vector2> direcciones = obtenerDireccionesVálidas(posiciónInicio, tamaño, controlarParedes);
+
+        return direcciones[UnityEngine.Random.Range(0, direcciones.Count)];
+    }
+
+    /// <summary>
+    /// Verifica todas las direcciones válidas desde una posición, a partir del
+    /// tamaño de una entidad.
+    /// </summary>
+    /// <param name="posiciónInicio">Posición desde la cual se controla.</param>
+    /// <param name="tamaño">Tamaño de la entidad.</param>
+    /// <param name="controlarParedes">Si se controlan también las paredes.</param>
+    /// <returns>Lista de direcciones válidas de movimiento.</returns>
+    public List<Vector2> obtenerDireccionesVálidas(Vector2 posiciónInicio, TamañoEntidad tamaño, bool controlarParedes = false)
+    {
         List<Vector2> direcciones = new List<Vector2>();
         List<Vector2> posiciones = new List<Vector2>();
 
@@ -463,7 +478,7 @@ public class ControladorJuego : MonoBehaviour {
                 case TamañoEntidad.GIGANTE:
                     Vector2 p01 = posiciónInicio + obtenerDirección(i) * 2f;
                     posiciones.Add(p01);
-                    Vector2 p02 = posiciónInicio + obtenerDirección(i) * 2f  + new Vector2(obtenerDirección(i).y, obtenerDirección(i).x);
+                    Vector2 p02 = posiciónInicio + obtenerDirección(i) * 2f + new Vector2(obtenerDirección(i).y, obtenerDirección(i).x);
                     posiciones.Add(p02);
                     Vector2 p03 = posiciónInicio + obtenerDirección(i) * 2f - new Vector2(obtenerDirección(i).y, obtenerDirección(i).x);
                     posiciones.Add(p03);
@@ -498,7 +513,7 @@ public class ControladorJuego : MonoBehaviour {
             }
         }
 
-        return direcciones[UnityEngine.Random.Range(0, direcciones.Count)];
+        return direcciones;
     }
 
     /// <summary>
@@ -553,9 +568,9 @@ public class ControladorJuego : MonoBehaviour {
     /// <summary>
     /// Verifica si el enemigo está adyacente al personaje.
     /// </summary>
-    /// <param name="enemigo">Enemigo desde el cual se hace el control.</param>
+    /// <param name="posición">Posición desde el cual se hace el control.</param>
     /// <returns>Verdadero si está adyacente.</returns>
-    public bool estáAdyacenteAlPersonaje(Enemigo enemigo, TamañoEntidad tamaño)
+    public bool estáAdyacenteAlPersonaje(Vector2 posición, TamañoEntidad tamaño)
     {
         float distancia = 0;
         switch (tamaño)
@@ -571,7 +586,7 @@ public class ControladorJuego : MonoBehaviour {
                 break;
         }
 
-        if ((enemigo.transform.position - Personaje.transform.position).magnitude <= distancia)
+        if ((posición - Personaje.RB.position).magnitude <= distancia)
         {
             return true;
         }
@@ -586,14 +601,28 @@ public class ControladorJuego : MonoBehaviour {
     /// <returns>Verdadero si está en la escalera.</returns>
     public bool personajeEstáEnEscalera()
     {
+        
         Vector2 posiciónEscaleraFixed = EscaleraActual.transform.position;
 
-        if ((posiciónEscaleraFixed - (Vector2) Personaje.transform.position).magnitude == 0)
+        if ((posiciónEscaleraFixed - Personaje.RB.position).magnitude == 0)
         {
             return true;
         }
 
         return false;
+        
+        /*
+        Vector2 p1 = Personaje.RB.position - new Vector2(0.25f, 0.25f);
+        Vector2 p2 = Personaje.RB.position + new Vector2(0.25f, 0.25f);
+        Collider2D collider = Physics2D.OverlapArea(p1, p2, 10);
+
+        if (collider != null && collider.tag == "Escalera")
+        {
+            return true;
+        }
+
+        return false;
+        */
     }
 
     // ANIMACIONES

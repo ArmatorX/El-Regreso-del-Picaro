@@ -190,7 +190,6 @@ public class Personaje : Entidad
         Estados.Add(new EstadoPersonaje(EstadosPersonaje.NORMAL));
 
         Ubicación = new Piso(this.transform.position);
-        VidaActual = 10;
 
         //seEstáMoviendo = false;
 
@@ -200,6 +199,8 @@ public class Personaje : Entidad
 
         EstadísticasNivel en1 = new EstadísticasNivel(14, 14, 16, 12, 25, 100, 1);
         NivelActual = new Nivel(1, 0, 150, en1);
+
+        VidaActual = obtenerVidaMáxima();
     }
 
     // Update is called once per frame
@@ -263,6 +264,11 @@ public class Personaje : Entidad
     public int obtenerDefensaBase()
     {
         return NivelActual.obtenerDefensaBase();
+    }
+    
+    public int obtenerVidaMáxima()
+    {
+        return NivelActual.obtenerVidaMáxima();
     }
 
     public override bool esEnemigo()

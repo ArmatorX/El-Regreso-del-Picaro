@@ -24,11 +24,13 @@ public class PantallaJuego : MonoBehaviour
     /// <remarks>Necesario para activar las animaciones.</remarks>
     private Personaje personaje;
     private bool animaciónEnProgreso;
+    private GameObject barraVidaPersonaje;
 
     // GETTERS Y SETTERS
     public ControladorJuego Controlador { get => controlador == null ? controlador = GameObject.Find("ControladorJuego").GetComponent<ControladorJuego>() : controlador; set => controlador = value; }
     public Personaje Personaje { get => personaje == null ? personaje = GameObject.Find("Personaje").GetComponent<Personaje>() : personaje; set => personaje = value; }
     public bool AnimaciónEnProgreso { get => animaciónEnProgreso; set => animaciónEnProgreso = value; }
+    public GameObject BarraVidaPersonaje { get => barraVidaPersonaje == null ? barraVidaPersonaje = GameObject.Find("Vida") : barraVidaPersonaje; set => barraVidaPersonaje = value; }
 
     // MÉTODOS
     /**
@@ -85,7 +87,13 @@ public class PantallaJuego : MonoBehaviour
         Controlador.bajarEscaleras();
     }
 
-    // ANIMACIONES MOVIMIENTO
+    private void actualizarVidaPersonaje()
+    {
+        Vector2 delta = new Vector2(128 * Personaje.VidaActual / Personaje.obtenerVidaMáxima(), 7);
+        BarraVidaPersonaje.GetComponent<RectTransform>().sizeDelta = delta;
+    }
+
+    // ANIMACIONES
     /// <summary>
     /// Inicia la corrutina que anima el movimiento del personaje.
     /// </summary>
@@ -224,7 +232,7 @@ public class PantallaJuego : MonoBehaviour
     }
 
     /// <summary>
-    /// Muestra la animación del ataque del murciélago.
+    /// Muestra la animación del ataque del enemigo.
     /// </summary>
     /// <remarks>
     /// Tipos de animación:
@@ -245,9 +253,11 @@ public class PantallaJuego : MonoBehaviour
                 Debug.Log("El ataque falló.");
                 break;
             case 1:
+                actualizarVidaPersonaje();
                 Debug.Log("El ataque impacta por " + dañoRealizado + " puntos de daño y dejó al personaje con " + Personaje.VidaActual + " puntos de vida.");
                 break;
             case 2:
+                actualizarVidaPersonaje();
                 Debug.Log("El ataque fue CRÍTICO, realizando " + dañoRealizado + " puntos de daño y dejó al personaje con " + Personaje.VidaActual + " puntos de vida.");
                 break;
         }

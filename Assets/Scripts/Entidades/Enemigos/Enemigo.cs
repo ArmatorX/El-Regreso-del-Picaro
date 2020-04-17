@@ -120,7 +120,7 @@ public abstract class Enemigo : Entidad
     }
     public bool estoyAdyacenteAlPersonaje()
     {
-        return Controlador.estáAdyacenteAlPersonaje(this, Tamaño);
+        return Controlador.estáAdyacenteAlPersonaje(RB.position, Tamaño);
     }
 
     public bool realizarAtaque(int impacto, int daño)
