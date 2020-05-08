@@ -1,10 +1,13 @@
 ﻿using UnityEngine;
 
 /// <summary>
-/// Representa un dado.
+/// Representa un dado de n caras.
 /// </summary>
 public class Dado
 {
+    /// <summary>
+    /// Cantidad de caras del dado.
+    /// </summary>
     private int cantidadCaras;
 
     public Dado(int cantidadCaras)
@@ -15,7 +18,8 @@ public class Dado
     public int CantidadCaras { get => cantidadCaras; set => cantidadCaras = value; }
 
     /// <summary>
-    /// Tira una determinada cantidad de dados.
+    /// Realiza una tirada de dados n dados, y devuelve la suma del resultado.
+    /// La cantidad de dados que se tiran está determinada por <c>cantidad</c>.
     /// </summary>
     /// <param name="cantidad">Cantidad de dados a tirar.</param>
     /// <returns>Resultado de la tirada.</returns>

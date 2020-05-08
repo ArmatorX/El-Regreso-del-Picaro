@@ -150,4 +150,58 @@ public class Equipo
 
         return modificador;
     }
+
+    /// <summary>
+    /// Verifica si un objeto está equipado.
+    /// </summary>
+    /// <param name="objetoAgarrable">Objeto para controlar.</param>
+    /// <returns>Verdadero si el objeto está equipado</returns>
+    public bool esObjetoEquipado(ObjetoAgarrable objetoAgarrable)
+    {
+        if (objetoAgarrable is Arma)
+        {
+            return esArmaEquipada((Arma) objetoAgarrable);
+        }
+        else if (objetoAgarrable is Anillo)
+        {
+            return esAnilloEquipado((Anillo) objetoAgarrable);
+        }
+        else if (objetoAgarrable is Armadura)
+        {
+            return esArmaduraEquipada((Armadura) objetoAgarrable);
+        } else
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Verifica si el arma es el arma equipada.
+    /// </summary>
+    /// <param name="arma">Arma a controlar.</param>
+    /// <returns>Verdadero si es el arma equipada.</returns>
+    public bool esArmaEquipada(Arma arma)
+    {
+        return arma.Equals(ArmaEquipada);
+    }
+
+    /// <summary>
+    /// Verifica si la armadura es la equipada.
+    /// </summary>
+    /// <param name="armadura">Armadura a controlar.</param>
+    /// <returns>Verdadero si es la armadura equipada.</returns>
+    public bool esArmaduraEquipada(Armadura armadura)
+    {
+        return armadura.Equals(ArmaduraEquipada);
+    }
+
+    /// <summary>
+    /// Verifica si el anillo está equipado.
+    /// </summary>
+    /// <param name="anillo">Anillo a controlar.</param>
+    /// <returns>Verdadero si es uno de los anillos equipados.</returns>
+    public bool esAnilloEquipado(Anillo anillo)
+    {
+        return anillo.Equals(Anillo1Equipado) || anillo.Equals(Anillo2Equipado);
+    }
 }

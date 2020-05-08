@@ -37,6 +37,7 @@ public class Personaje : Entidad
     /// <value>Lista de estados en los que se encuentra actualmente el personaje.</value>
     private List<EstadoPersonaje> estados;
     private Equipo equipoActual;
+    private Inventario inventario;
     private Rigidbody2D rb;
     private Animator animaciones;
 
@@ -61,9 +62,9 @@ public class Personaje : Entidad
     public List<EstadoPersonaje> Estados { get => estados; set => estados = value; }
     public Equipo EquipoActual { get => equipoActual; set => equipoActual = value; }
     public Nivel NivelActual { get => nivelActual; set => nivelActual = value; }
-    public Rigidbody2D RB { get => rb == null ? GetComponent<Rigidbody2D>() : rb; set => rb = value; }
-    public Animator Animaciones { get => animaciones == null ? GetComponent<Animator>() : animaciones; set => animaciones = value; }
-
+    public Rigidbody2D RB { get => rb == null ? rb = GetComponent<Rigidbody2D>() : rb; set => rb = value; }
+    public Animator Animaciones { get => animaciones == null ? animaciones = GetComponent<Animator>() : animaciones; set => animaciones = value; }
+    public Inventario Inventario { get => inventario == null ? inventario = new Inventario() : inventario; set => inventario = value; }
 
     /**
      * <summary>
@@ -78,8 +79,39 @@ public class Personaje : Entidad
         // Consumo los puntos de comida del movimiento.
         consumirComida(COMIDA_MOVIMIENTO);
 
+        moverManiquí(dirección);
+
         // Muestro la animación del movimiento del personaje.
         Controlador.animaciónMovimientoPersonaje(dirección);
+    }
+
+    /// <summary>
+    /// Crea un maniquí. Evita que los enemigos 
+    /// elijan el mismo casillero de destino que el personaje.
+    /// </summary>
+    public void crearManiquí()
+    {
+        Maniquí = new GameObject("Maniquí");
+
+        Maniquí.tag = "Player";
+
+        Maniquí.transform.localScale = new Vector3(6.25f, 6.25f, 1);
+
+        Maniquí.transform.position = this.transform.position;
+
+        BoxCollider2D hitbox = Maniquí.AddComponent<BoxCollider2D>();
+
+        hitbox.size = new Vector2(0.16f, 0.16f);
+    }
+
+    /// <summary>
+    /// Mueve el maniquí en la dirección de movimiento. Evita que los enemigos 
+    /// elijan el mismo casillero de destino que el personaje.
+    /// </summary>
+    /// <param name="dirección">Dirección de movimiento.</param>
+    public void moverManiquí(Vector2 dirección)
+    {
+        Maniquí.transform.position += (Vector3) dirección;
     }
 
     /**
@@ -176,43 +208,6 @@ public class Personaje : Entidad
         return NivelActual.obtenerModificadorFuerzaBase();
     }
 
-    // Start is called before the first frame update
-    void Start()
-    {
-        // Inicializo los atributos
-        //rigidBody2D = GetComponent<Rigidbody2D>();
-
-        Tamaño = TamañoEntidad.NORMAL;
-        ModificadorVidaMáxima = 0;
-        ComidaActual = 100;
-        ExperienciaActual = 0;
-        Estados = new List<EstadoPersonaje>();
-        Estados.Add(new EstadoPersonaje(EstadosPersonaje.NORMAL));
-
-        Ubicación = new Piso(this.transform.position);
-
-        //seEstáMoviendo = false;
-
-        EquipoActual = new Equipo();
-        Arma arma = new EspadaLarga();
-        EquipoActual.ArmaEquipada = arma;
-
-        EstadísticasNivel en1 = new EstadísticasNivel(14, 14, 16, 12, 25, 100, 1);
-        NivelActual = new Nivel(1, 0, 150, en1);
-
-        VidaActual = obtenerVidaMáxima();
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        if (Estados[0].Nombre == EstadosPersonaje.MUERTO)
-        {
-            Destroy(gameObject);
-            Controlador.Personaje = null;
-        }
-    }
-
     /// <summary>
     /// Verifica si el personaje está en un estado alterado a partir
     /// de su nombre.
@@ -274,5 +269,68 @@ public class Personaje : Entidad
     public override bool esEnemigo()
     {
         return false;
+    }
+
+    // MÉTODOS DE UNITY
+    void Start()
+    {
+        // Inicializo los atributos
+        //rigidBody2D = GetComponent<Rigidbody2D>();
+
+        Tamaño = TamañoEntidad.NORMAL;
+        ModificadorVidaMáxima = 0;
+        ComidaActual = 100;
+        ExperienciaActual = 0;
+        Estados = new List<EstadoPersonaje>();
+        Estados.Add(new EstadoPersonaje(EstadosPersonaje.NORMAL));
+
+        Ubicación = new Piso(this.transform.position);
+
+        //seEstáMoviendo = false;
+
+        EquipoActual = new Equipo();
+        Arma arma = new EspadaLarga();
+        EquipoActual.ArmaEquipada = arma;
+
+        EstadísticasNivel en1 = new EstadísticasNivel(14, 14, 16, 12, 25, 100, 1);
+        NivelActual = new Nivel(1, 0, 150, en1);
+
+        VidaActual = obtenerVidaMáxima();
+
+        ObjetoAgarrable pociónVida = new ObjetoAgarrable("Poción de Vida",
+            "Una poción que restaura la salud.",
+            "Una poción que al ser utilizada restaura 1d8 de salud.",
+            "Gráficos/items/poción_vida");
+
+        Inventario.Detalle.Add(new DetalleInventario(1, arma));
+        Inventario.Detalle.Add(new DetalleInventario(3, pociónVida));
+        /*
+        Inventario.Detalle.Add(new DetalleInventario(1, pociónVida));
+        Inventario.Detalle.Add(new DetalleInventario(1, pociónVida));
+        Inventario.Detalle.Add(new DetalleInventario(1, pociónVida));
+        Inventario.Detalle.Add(new DetalleInventario(1, pociónVida));
+        Inventario.Detalle.Add(new DetalleInventario(1, pociónVida));
+        Inventario.Detalle.Add(new DetalleInventario(1, pociónVida));
+        Inventario.Detalle.Add(new DetalleInventario(1, pociónVida));
+        Inventario.Detalle.Add(new DetalleInventario(1, pociónVida));
+        Inventario.Detalle.Add(new DetalleInventario(1, pociónVida));
+        Inventario.Detalle.Add(new DetalleInventario(1, pociónVida));
+        Inventario.Detalle.Add(new DetalleInventario(1, pociónVida));
+        Inventario.Detalle.Add(new DetalleInventario(1, pociónVida));
+        Inventario.Detalle.Add(new DetalleInventario(1, pociónVida));
+        //Inventario.Detalle.Add(new DetalleInventario(1, pociónVida));
+        */
+
+        crearManiquí();
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        if (Estados[0].Nombre == EstadosPersonaje.MUERTO)
+        {
+            Destroy(gameObject);
+            Controlador.Personaje = null;
+        }
     }
 }

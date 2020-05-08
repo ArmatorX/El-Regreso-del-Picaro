@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 /**
  * <summary>
@@ -25,12 +26,21 @@ public class PantallaJuego : MonoBehaviour
     private Personaje personaje;
     private bool animaciónEnProgreso;
     private GameObject barraVidaPersonaje;
+    private GameObject[,] inventario = new GameObject[4, 4];
+    private GameObject inventarioGUI;
+    private GameObject cursorInventario;
+    private GameObject contenedorTextoDaños;
 
     // GETTERS Y SETTERS
     public ControladorJuego Controlador { get => controlador == null ? controlador = GameObject.Find("ControladorJuego").GetComponent<ControladorJuego>() : controlador; set => controlador = value; }
     public Personaje Personaje { get => personaje == null ? personaje = GameObject.Find("Personaje").GetComponent<Personaje>() : personaje; set => personaje = value; }
     public bool AnimaciónEnProgreso { get => animaciónEnProgreso; set => animaciónEnProgreso = value; }
     public GameObject BarraVidaPersonaje { get => barraVidaPersonaje == null ? barraVidaPersonaje = GameObject.Find("Vida") : barraVidaPersonaje; set => barraVidaPersonaje = value; }
+    public GameObject[,] Inventario { get => inventario; set => inventario = value; }
+    public GameObject InventarioGUI { get => inventarioGUI == null ? inventarioGUI = GameObject.Find("Inventario") : inventarioGUI; set => inventarioGUI = value; }
+    public GameObject CursorInventario { get => cursorInventario == null ? cursorInventario = GameObject.Find("Cursor Inventario") : cursorInventario; set => cursorInventario = value; }
+    public GameObject ContenedorTextoDaños { get => contenedorTextoDaños == null ? contenedorTextoDaños = GameObject.Find("Daños") : contenedorTextoDaños; set => contenedorTextoDaños = value; }
+
 
     // MÉTODOS
     /**
@@ -87,10 +97,162 @@ public class PantallaJuego : MonoBehaviour
         Controlador.bajarEscaleras();
     }
 
-    private void actualizarVidaPersonaje()
+    public void actualizarVidaPersonaje()
     {
         Vector2 delta = new Vector2(128 * Personaje.VidaActual / Personaje.obtenerVidaMáxima(), 7);
         BarraVidaPersonaje.GetComponent<RectTransform>().sizeDelta = delta;
+    }
+
+    /// <summary>
+    /// Pausa el juego y abre el inventario del personaje.
+    /// </summary>
+    public void mostrarInventario()
+    {
+        InventarioGUI.SetActive(true);
+        Controlador.mostrarInventario();
+    }
+
+    /// <summary>
+    /// Crea y muestra las visualizaciones de los objetos del inventario del 
+    /// personaje.
+    /// </summary>
+    /// <param name="objetos">Objetos del inventario.</param>
+    /// <param name="cantidades">Cantidad de cada objeto del inventario.</param>
+    public void mostrarObjetosInventario(ObjetoAgarrable[] objetos, bool[] estáEquipado, int[] cantidades)
+    {
+        for (int i = 0; i < objetos.Length; i ++)
+        {
+            int j = tranformarIndex(i)[0];
+            int k = tranformarIndex(i)[1];
+            int posX = tranformarIndex(i)[2];
+            int posY = tranformarIndex(i)[3];
+
+            // Creo la imagen
+            Inventario[j, k] = new GameObject(objetos[i].Nombre);
+
+            Image imagen = Inventario[j, k].AddComponent<Image>(); 
+            Sprite sprite = Resources.Load<Sprite>(objetos[i].RutaSprite);
+            imagen.sprite = sprite;
+
+            RectTransform rtImagen = Inventario[j, k].GetComponent<RectTransform>();
+                
+            rtImagen.SetParent(InventarioGUI.transform);
+
+            rtImagen.anchorMin.Set(0.5f, 0.5f);
+            rtImagen.anchorMax.Set(0.5f, 0.5f);
+            rtImagen.pivot.Set(0.5f, 0.5f);
+
+            rtImagen.anchoredPosition = new Vector3(posX, posY, 0);
+
+            rtImagen.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, 16);
+            rtImagen.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 16);
+            rtImagen.localScale = new Vector3(7, 7, 1);
+
+            Inventario[j, k].SetActive(true);
+
+            // Creo el texto que indica la cantidad
+            GameObject goCantidad = new GameObject("txtCantidad");
+
+            Text txtCantidad = goCantidad.AddComponent<Text>();
+
+            txtCantidad.text = "x" + cantidades[i];
+            txtCantidad.font = Resources.GetBuiltinResource(typeof(Font), "Arial.ttf") as Font;
+            txtCantidad.alignment = TextAnchor.MiddleCenter;
+            txtCantidad.fontSize = 14;
+
+            RectTransform rtTextoCantidad = goCantidad.GetComponent<RectTransform>();
+            rtTextoCantidad.SetParent(rtImagen);
+            
+            rtTextoCantidad.anchorMin.Set(0.5f, 0.5f);
+            rtTextoCantidad.anchorMax.Set(0.5f, 0.5f);
+            rtTextoCantidad.pivot.Set(0.5f, 0.5f);
+
+            rtTextoCantidad.anchoredPosition = new Vector3(4.6f, -4.6f);
+
+            // Creo el indicador de objeto equipado
+            if (estáEquipado[i])
+            {
+                GameObject goMarcadorEquipado = new GameObject("txtMarcadorEquipado");
+
+                Text txtMarcadorEquipado = goMarcadorEquipado.AddComponent<Text>();
+
+                txtMarcadorEquipado.text = "+";
+                txtMarcadorEquipado.font = Resources.GetBuiltinResource(typeof(Font), "Arial.ttf") as Font;
+                txtMarcadorEquipado.alignment = TextAnchor.MiddleCenter;
+                txtMarcadorEquipado.fontSize = 16;
+                txtMarcadorEquipado.color = Color.yellow;
+
+                RectTransform rtTextoMarcador = goMarcadorEquipado.GetComponent<RectTransform>();
+                rtTextoMarcador.SetParent(rtImagen);
+
+                rtTextoMarcador.anchorMin.Set(0.5f, 0.5f);
+                rtTextoMarcador.anchorMax.Set(0.5f, 0.5f);
+                rtTextoMarcador.pivot.Set(0.5f, 0.5f);
+
+                rtTextoMarcador.anchoredPosition = new Vector3(-4.6f, 4.6f);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Se encarga de mover el cursor dentro del inventario.
+    /// </summary>
+    /// <param name="dirección"></param>
+    public void moverCursorInventario(Vector2 dirección)
+    {
+        dirección *= 112;
+
+        Vector3 posición = CursorInventario.GetComponent<RectTransform>().anchoredPosition + dirección;
+
+        if (!(posición.x > 168 || posición.x < -168 || posición.y > 133 || posición.y < -203))
+        {
+            CursorInventario.GetComponent<RectTransform>().anchoredPosition = posición;
+        }
+    }
+
+    /// <summary>
+    /// Sirve para adaptar el i al inventario visual de 4x4.
+    /// </summary>
+    /// <param name="i">i</param>
+    /// <returns>(i, j)</returns>
+    public int[] tranformarIndex(int i)
+    {
+        int[] salida = new int[4];
+        if (i < 4) {
+            salida[0] = 0;
+            salida[1] = i;
+            salida[2] = i * 112 - 168;
+            salida[3] = 133;
+        } else if (i < 8)
+        {
+            salida[0] = 1;
+            salida[1] = i - 4;
+            salida[2] = (i - 4) * 112 - 168;
+            salida[3] = -1 * 112 + 133;
+        } else if (i < 12)
+        {
+            salida[0] = 2;
+            salida[1] = i - 8;
+            salida[2] = (i - 8) * 112 - 168;
+            salida[3] = -2 * 112 + 133;
+        } else
+        {
+            salida[0] = 3;
+            salida[1] = i - 12;
+            salida[2] = (i - 12) * 112 - 168;
+            salida[3] = -3 * 112 + 133;
+        }
+
+        return salida;
+    }
+
+    public void ocultarInventario()
+    {
+        foreach (GameObject objeto in Inventario) {
+            Destroy(objeto);
+        }
+
+        InventarioGUI.SetActive(false);
     }
 
     // ANIMACIONES
@@ -113,7 +275,6 @@ public class PantallaJuego : MonoBehaviour
     /// <returns>Corrutina de movimiento.</returns>
     public IEnumerator movimientoSuavizadoPersonaje(Vector2 destino)
     {
-        AnimaciónEnProgreso = true;
         Personaje.Animaciones.SetInteger("estado", 1);
 
         orientarSpriteEntidad(Personaje, destino - Personaje.RB.position);
@@ -128,7 +289,8 @@ public class PantallaJuego : MonoBehaviour
         }
 
         Personaje.Animaciones.SetInteger("estado", 0);
-        AnimaciónEnProgreso = false;
+
+        //Controlador.eliminarManiquí(Personaje);
     }
 
     /// <summary>
@@ -179,8 +341,6 @@ public class PantallaJuego : MonoBehaviour
     /// <returns>Corrutina de movimiento.</returns>
     public IEnumerator movimientoSuavizadoEnemigo(Vector2 destino, Enemigo enemigo)
     {
-        AnimaciónEnProgreso = true;
-
         orientarSpriteEntidad(enemigo, destino - enemigo.RB.position);
 
         for (int i = 1; (destino - enemigo.RB.position).magnitude > Mathf.Epsilon; i++)
@@ -192,12 +352,12 @@ public class PantallaJuego : MonoBehaviour
             yield return null;
         }
 
-        AnimaciónEnProgreso = false;
+        //Controlador.eliminarManiquí(enemigo);
     }
 
     public void mostrarExcepcion(Exception e)
     {
-        throw new NotImplementedException();
+        Debug.LogError(e);
     }
 
     // ANIMACIONES ATAQUES
@@ -220,15 +380,63 @@ public class PantallaJuego : MonoBehaviour
         switch (tipo)
         {
             case 0:
-                Debug.Log("El ataque falló.");
+                mostrarTextoAtaqueFalló(objetivo);
                 break;
             case 1:
-                Debug.Log("El ataque impacta por " + dañoRealizado + " puntos de daño y dejó al enemigo con " + objetivo.VidaActual + " puntos de vida.");
+                mostrarTextoDañoAtaque(objetivo, dañoRealizado);
                 break;
             case 2:
-                Debug.Log("El ataque fue CRÍTICO, realizando " + dañoRealizado + " puntos de daño y dejó al enemigo con " + objetivo.VidaActual + " puntos de vida.");
+                mostrarTextoDañoAtaque(objetivo, dañoRealizado);
                 break;
         }
+    }
+
+    private void mostrarTextoAtaqueFalló(Entidad objetivo)
+    {
+        GameObject goTxtFalló = new GameObject("Ataque Melé Personaje");
+
+        Text txtFalló = goTxtFalló.AddComponent<Text>();
+
+        txtFalló.text = "¡Falló!";
+        txtFalló.font = Resources.GetBuiltinResource(typeof(Font), "Arial.ttf") as Font;
+        txtFalló.alignment = TextAnchor.MiddleCenter;
+        txtFalló.fontSize = 24;
+        txtFalló.fontStyle = FontStyle.Bold;
+        txtFalló.color = Color.white;
+
+        RectTransform rtTxtFalló = goTxtFalló.GetComponent<RectTransform>();
+        rtTxtFalló.SetParent(ContenedorTextoDaños.transform);
+
+        rtTxtFalló.anchorMin.Set(0.5f, 0.5f);
+        rtTxtFalló.anchorMax.Set(0.5f, 0.5f);
+        rtTxtFalló.pivot.Set(0.5f, 0.5f);
+
+        rtTxtFalló.position = objetivo.transform.position;
+        rtTxtFalló.localScale = new Vector3(1, 1, 1);
+    }
+
+    private void mostrarTextoDañoAtaque(Entidad objetivo, int daño)
+    {
+        GameObject goTxtFalló = new GameObject("Ataque Melé Personaje");
+
+        Text txtFalló = goTxtFalló.AddComponent<Text>();
+
+        txtFalló.text = "-" + daño;
+        txtFalló.font = Resources.GetBuiltinResource(typeof(Font), "Arial.ttf") as Font;
+        txtFalló.alignment = TextAnchor.MiddleCenter;
+        txtFalló.fontSize = 24;
+        txtFalló.fontStyle = FontStyle.Bold;
+        txtFalló.color = Color.red;
+
+        RectTransform rtTxtFalló = goTxtFalló.GetComponent<RectTransform>();
+        rtTxtFalló.SetParent(ContenedorTextoDaños.transform);
+
+        rtTxtFalló.anchorMin.Set(0.5f, 0.5f);
+        rtTxtFalló.anchorMax.Set(0.5f, 0.5f);
+        rtTxtFalló.pivot.Set(0.5f, 0.5f);
+
+        rtTxtFalló.position = objetivo.transform.position;
+        rtTxtFalló.localScale = new Vector3(1, 1, 1);
     }
 
     /// <summary>
@@ -267,6 +475,7 @@ public class PantallaJuego : MonoBehaviour
     void Start()
     {
         AnimaciónEnProgreso = false;
+        InventarioGUI.SetActive(false);
     }
 
     void Update()
@@ -281,9 +490,13 @@ public class PantallaJuego : MonoBehaviour
                 {
                     moverPersonaje(dirección);
                 }
-                else if (Input.GetButtonDown("GoDown"))
+                else if (Input.GetButtonDown("BajarEscalera"))
                 {
                     bajarEscaleras();
+                }
+                else if (Input.GetButtonDown("MostrarInventario"))
+                {
+                    mostrarInventario();
                 }
             }
         }

@@ -116,8 +116,40 @@ public abstract class Enemigo : Entidad
 
     public override void moverse(Vector2 dirección)
     {
+        moverManiquí(dirección);
         Controlador.animaciónMovimientoEnemigo(this, dirección);
+        //crearManiquí(dirección);
     }
+    
+    /// <summary>
+    /// Crea un maniquí. Evita que dos enemigos 
+    /// elijan el mismo casillero como destino.
+    /// </summary>
+    public void crearManiquí()
+    {
+        Maniquí = new GameObject("Maniquí");
+
+        Maniquí.tag = "Enemigo";
+
+        Maniquí.transform.localScale = new Vector3(6.25f, 6.25f, 1);
+
+        Maniquí.transform.position = this.transform.position;
+
+        BoxCollider2D hitbox = Maniquí.AddComponent<BoxCollider2D>();
+
+        hitbox.size = new Vector2(0.16f, 0.16f);
+    }
+    
+    /// <summary>
+    /// Mueve el maniquí en la dirección de movimiento. Evita que dos enemigos 
+    /// elijan el mismo casillero como destino.
+    /// </summary>
+    /// <param name="dirección">Dirección de movimiento.</param>
+    public void moverManiquí(Vector2 dirección)
+    {
+        Maniquí.transform.position += (Vector3)dirección;
+    }
+
     public bool estoyAdyacenteAlPersonaje()
     {
         return Controlador.estáAdyacenteAlPersonaje(RB.position, Tamaño);

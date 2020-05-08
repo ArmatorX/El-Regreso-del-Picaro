@@ -7,7 +7,8 @@ using UnityEngine;
  * Esta clase es una abstracción de todas las entidades del juego.
  * </summary>
  * <remarks>
- * Contiene métodos y atributos que son comunes tanto a los enemigos como al personaje.
+ * Contiene métodos y atributos que son comunes tanto a los enemigos como al 
+ * personaje.
  * </remarks>
  */
 public abstract class Entidad : MonoBehaviour
@@ -17,10 +18,18 @@ public abstract class Entidad : MonoBehaviour
     private Piso ubicación;
     /// <value>Los puntos de vida restantes de la entidad.</value>
     private int vidaActual;
+    /// <value>Controlador.</value>
     private ControladorJuego controlador;
+    /// <value>Determina si la entidad tiene ventaja para sus ataques.</value>
     private bool ventaja;
+    /// <value>Determina si la entidad tiene desventaja para sus ataques.</value>
     private bool desventaja;
+    /// <value>Determina el tamaño que ocupa una entidad.</value>
     private TamañoEntidad tamaño;
+    /// <value>Es un objeto falso que determina la hitbox de la entidad.
+    /// El movimiento de los maniquíes es síncrono, de forma que las animaciones 
+    /// se pueden hacer de forma asíncrona sin afectar el juego.</value>
+    private GameObject maniquí;
 
     public Piso Ubicación { get => ubicación; set => ubicación = value; }
     public int VidaActual { get => vidaActual; set => vidaActual = value; }
@@ -28,14 +37,17 @@ public abstract class Entidad : MonoBehaviour
     public bool Ventaja
     {
         get => ventaja;
+        // Estoy seguro que para este set armé una tabla de verdad.
         set => ventaja = value && !desventaja;
     }
     public bool Desventaja
     {
         get => desventaja;
+        // Estoy seguro que para este set armé una tabla de verdad.
         set => desventaja = value && !ventaja;
     }
     public TamañoEntidad Tamaño { get => tamaño; set => tamaño = value; }
+    public GameObject Maniquí { get => maniquí; set => maniquí = value; }
 
     public int calcularImpacto(int modificadorMisceláneo)
     {
@@ -77,7 +89,15 @@ public abstract class Entidad : MonoBehaviour
             VidaActual -= daño;
         }
     }
-
+    /*
+    /// <summary>
+    /// Elimina la instancia del GameObject de maniquí.
+    /// </summary>
+    public void eliminarManiquí()
+    {
+        Destroy(Maniquí);
+    }
+    */
     /**
      * <summary>
      * Se encarga de mover a la entidad en una dirección determinada.

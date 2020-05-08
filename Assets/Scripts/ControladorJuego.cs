@@ -77,6 +77,7 @@ public class ControladorJuego : MonoBehaviour {
     /// actual.</value>
     private List<Enemigo> enemigos;
     private GameObject escaleraActual;
+    private bool juegoEnPausa;
 
     // GETTERS Y SETTERS
     public PantallaJuego Pantalla { get => pantalla == null ? pantalla = GameObject.Find("PantallaJuego").GetComponent<PantallaJuego>() : pantalla; set => pantalla = value; }
@@ -89,6 +90,7 @@ public class ControladorJuego : MonoBehaviour {
     public List<GameObject> Mapas { get => mapas; set => mapas = value; }
     public int MapaActual { get => mapaActual; set => mapaActual = value; }
     public GameObject EscaleraActual { get => escaleraActual == null ? escaleraActual = GameObject.Find("Escalera") : escaleraActual; set => escaleraActual = value; }
+    public bool JuegoEnPausa { get => juegoEnPausa; set => juegoEnPausa = value; }
 
     // CASOS DE USO
     /// <summary>
@@ -99,63 +101,73 @@ public class ControladorJuego : MonoBehaviour {
     /// </param>
     public void moverPersonaje(Vector2 dirección)
     {
-        Vector2 posiciónDestino = (Vector2) Personaje.transform.position + dirección;
-
-        if (!personajeEnEstado(EstadosPersonaje.CONGELADO))
+        if (JuegoEnPausa)
         {
-            if (personajeEnEstado(EstadosPersonaje.CONFUNDIDO))
+            Pantalla.moverCursorInventario(dirección);
+        }
+        else
+        {
+            if (FaseActual == FasesTurno.TURNO_PERSONAJE)
             {
-                if(!hayEnemigoEn(posiciónDestino))
-                {
-                    dirección = obtenerDirecciónAleatoria(Personaje.transform.position, Personaje.Tamaño);
-                }
-            }
+                FaseActual = FasesTurno.TURNO_ENEMIGOS;
 
-            if (personajeEnEstado(EstadosPersonaje.PARALIZADO))
-            {
-                if (hayObstáculoEn(posiciónDestino))
-                {
-                    Personaje.consumirComida(Personaje.COMIDA_MOVIMIENTO);
-                    Pantalla.animaciónMovimientoPJFalla(dirección);
-                }
-            } 
-            else
-            {
-                if (!hayObstáculoEn(posiciónDestino))
-                {
-                    Personaje.moverse(dirección);
+                Vector2 posiciónDestino = (Vector2)Personaje.transform.position + dirección;
 
-                    //actualizarVisibilidadDelMapa();
-                }
-                else
+                if (!personajeEnEstado(EstadosPersonaje.CONGELADO))
                 {
-                    Enemigo objetivo = obtenerEnemigoEn(posiciónDestino);
-
-                    if (objetivo != null)
+                    if (personajeEnEstado(EstadosPersonaje.CONFUNDIDO))
                     {
-                        try
+                        if (!hayEnemigoEn(posiciónDestino))
                         {
-                            atacarEnemigoCuerpoACuerpo(objetivo);
+                            dirección = obtenerDirecciónAleatoria(Personaje.transform.position, Personaje.Tamaño);
                         }
-                        catch (Exception e)
+                    }
+
+                    if (personajeEnEstado(EstadosPersonaje.PARALIZADO))
+                    {
+                        if (hayObstáculoEn(posiciónDestino))
                         {
-                            Pantalla.mostrarExcepcion(e);
+                            Personaje.consumirComida(Personaje.COMIDA_MOVIMIENTO);
+                            Pantalla.animaciónMovimientoPJFalla(dirección);
                         }
                     }
                     else
                     {
-                        Pantalla.animaciónMovimientoPJFalla(dirección);
+                        if (!hayObstáculoEn(posiciónDestino))
+                        {
+                            Personaje.moverse(dirección);
+
+                            //actualizarVisibilidadDelMapa();
+                        }
+                        else
+                        {
+                            Enemigo objetivo = obtenerEnemigoEn(posiciónDestino);
+
+                            if (objetivo != null)
+                            {
+                                try
+                                {
+                                    atacarEnemigoCuerpoACuerpo(objetivo);
+                                }
+                                catch (Exception e)
+                                {
+                                    Pantalla.mostrarExcepcion(e);
+                                }
+                            }
+                            else
+                            {
+                                Pantalla.animaciónMovimientoPJFalla(dirección);
+                            }
+                        }
                     }
                 }
+                else
+                {
+                    Personaje.consumirComida(Personaje.COMIDA_MOVIMIENTO);
+                    Pantalla.animaciónMovimientoPJFalla(dirección);
+                }
             }
-        } 
-        else
-        {
-            Personaje.consumirComida(Personaje.COMIDA_MOVIMIENTO);
-            Pantalla.animaciónMovimientoPJFalla(dirección);
         }
-
-        FaseActual = FasesTurno.ESPERANDO_ANIMACIONES_PERSONAJE;
     }
 
     /// <summary>
@@ -182,7 +194,7 @@ public class ControladorJuego : MonoBehaviour {
 
             if (objetivo.esEnemigo())
             {
-                if (enemigoEnEstado(EstadosEnemigo.VOLANDO, (Enemigo) objetivo))
+                if (enemigoEnEstado(EstadosEnemigo.VOLANDO, (Enemigo)objetivo))
                 {
                     modificadorAtaque -= 2;
                 }
@@ -192,7 +204,7 @@ public class ControladorJuego : MonoBehaviour {
         }
         else
         {
-            Pantalla.animaciónAtaqueMeléPersonaje((Enemigo) objetivo, 0, 0);
+            Pantalla.animaciónAtaqueMeléPersonaje((Enemigo)objetivo, 0, 0);
         }
     }
 
@@ -214,62 +226,130 @@ public class ControladorJuego : MonoBehaviour {
     /// </summary>
     public void bajarEscaleras()
     {
-        if (personajeEstáEnEscalera())
+        if (JuegoEnPausa)
         {
-            Mapas[MapaActual].SetActive(false);
 
-            if (MapaActual < 3)
+        }
+        else
+        {
+            if (FaseActual == FasesTurno.TURNO_PERSONAJE)
             {
-                MapaActual++;
-                Mapas[MapaActual].SetActive(true);
-            }
+                if (personajeEstáEnEscalera())
+                {
+                    Mapas[MapaActual].SetActive(false);
 
-            Enemigos = new List<Enemigo>();
+                    if (MapaActual < 3)
+                    {
+                        MapaActual++;
+                        Mapas[MapaActual].SetActive(true);
+                    }
 
-            if (MapaActual == 1)
-            {
-                Enemigos.Add(GameObject.Find("Murciélago (1)").GetComponent<Murciélago>());
-                Enemigos.Add(GameObject.Find("Murciélago (2)").GetComponent<Murciélago>());
-                Enemigos.Add(GameObject.Find("Murciélago (3)").GetComponent<Murciélago>());
-                Enemigos.Add(GameObject.Find("Murciélago (4)").GetComponent<Murciélago>());
-                Enemigos.Add(GameObject.Find("Murciélago (5)").GetComponent<Murciélago>());
-                Enemigos.Add(GameObject.Find("Murciélago (6)").GetComponent<Murciélago>());
-                Enemigos.Add(GameObject.Find("Murciélago (7)").GetComponent<Murciélago>());
-                Enemigos.Add(GameObject.Find("Murciélago (8)").GetComponent<Murciélago>());
-                Enemigos.Add(GameObject.Find("Murciélago (9)").GetComponent<Murciélago>());
-                Enemigos.Add(GameObject.Find("Murciélago (10)").GetComponent<Murciélago>());
-                Enemigos.Add(GameObject.Find("Murciélago (11)").GetComponent<Murciélago>());
-                Enemigos.Add(GameObject.Find("Serpiente (1)").GetComponent<Serpiente>());
-                Enemigos.Add(GameObject.Find("Serpiente (2)").GetComponent<Serpiente>());
-                Enemigos.Add(GameObject.Find("Serpiente (3)").GetComponent<Serpiente>());
-                Enemigos.Add(GameObject.Find("Serpiente (4)").GetComponent<Serpiente>());
-                Enemigos.Add(GameObject.Find("Serpiente (5)").GetComponent<Serpiente>());
-                Enemigos.Add(GameObject.Find("Serpiente (6)").GetComponent<Serpiente>());
-                Enemigos.Add(GameObject.Find("Serpiente (7)").GetComponent<Serpiente>());
-                Enemigos.Add(GameObject.Find("Serpiente (8)").GetComponent<Serpiente>());
-                Enemigos.Add(GameObject.Find("Serpiente (9)").GetComponent<Serpiente>());
-                Enemigos.Add(GameObject.Find("Serpiente (10)").GetComponent<Serpiente>());
-                Enemigos.Add(GameObject.Find("Serpiente (11)").GetComponent<Serpiente>());
-                Enemigos.Add(GameObject.Find("Serpiente (12)").GetComponent<Serpiente>());
+                    Enemigos = new List<Enemigo>();
 
-                EscaleraActual = GameObject.Find("Escalera");
-            }
-            else if (MapaActual == 2)
-            {
-                Enemigos.Add(GameObject.Find("Murciélago (1)").GetComponent<Murciélago>());
-                Enemigos.Add(GameObject.Find("Murciélago (2)").GetComponent<Murciélago>());
-                Enemigos.Add(GameObject.Find("Murciélago (3)").GetComponent<Murciélago>());
-                Enemigos.Add(GameObject.Find("Murciélago (4)").GetComponent<Murciélago>());
-                Enemigos.Add(GameObject.Find("Murciélago (5)").GetComponent<Murciélago>());
-                Enemigos.Add(GameObject.Find("Murciélago (6)").GetComponent<Murciélago>());
-                Enemigos.Add(GameObject.Find("Troll").GetComponent<Troll>());
+                    if (MapaActual == 1)
+                    {
+                        Enemigos.Add(GameObject.Find("Murciélago (1)").GetComponent<Murciélago>());
+                        Enemigos.Add(GameObject.Find("Murciélago (2)").GetComponent<Murciélago>());
+                        Enemigos.Add(GameObject.Find("Murciélago (3)").GetComponent<Murciélago>());
+                        Enemigos.Add(GameObject.Find("Murciélago (4)").GetComponent<Murciélago>());
+                        Enemigos.Add(GameObject.Find("Murciélago (5)").GetComponent<Murciélago>());
+                        Enemigos.Add(GameObject.Find("Murciélago (6)").GetComponent<Murciélago>());
+                        Enemigos.Add(GameObject.Find("Murciélago (7)").GetComponent<Murciélago>());
+                        Enemigos.Add(GameObject.Find("Murciélago (8)").GetComponent<Murciélago>());
+                        Enemigos.Add(GameObject.Find("Murciélago (9)").GetComponent<Murciélago>());
+                        Enemigos.Add(GameObject.Find("Murciélago (10)").GetComponent<Murciélago>());
+                        Enemigos.Add(GameObject.Find("Murciélago (11)").GetComponent<Murciélago>());
+                        Enemigos.Add(GameObject.Find("Serpiente (1)").GetComponent<Serpiente>());
+                        Enemigos.Add(GameObject.Find("Serpiente (2)").GetComponent<Serpiente>());
+                        Enemigos.Add(GameObject.Find("Serpiente (3)").GetComponent<Serpiente>());
+                        Enemigos.Add(GameObject.Find("Serpiente (4)").GetComponent<Serpiente>());
+                        Enemigos.Add(GameObject.Find("Serpiente (5)").GetComponent<Serpiente>());
+                        Enemigos.Add(GameObject.Find("Serpiente (6)").GetComponent<Serpiente>());
+                        Enemigos.Add(GameObject.Find("Serpiente (7)").GetComponent<Serpiente>());
+                        Enemigos.Add(GameObject.Find("Serpiente (8)").GetComponent<Serpiente>());
+                        Enemigos.Add(GameObject.Find("Serpiente (9)").GetComponent<Serpiente>());
+                        Enemigos.Add(GameObject.Find("Serpiente (10)").GetComponent<Serpiente>());
+                        Enemigos.Add(GameObject.Find("Serpiente (11)").GetComponent<Serpiente>());
+                        Enemigos.Add(GameObject.Find("Serpiente (12)").GetComponent<Serpiente>());
 
-                //EscaleraActual = GameObject.Find("Escalera");
+                        EscaleraActual = GameObject.Find("Escalera");
+                    }
+                    else if (MapaActual == 2)
+                    {
+                        Enemigos.Add(GameObject.Find("Murciélago (1)").GetComponent<Murciélago>());
+                        Enemigos.Add(GameObject.Find("Murciélago (2)").GetComponent<Murciélago>());
+                        Enemigos.Add(GameObject.Find("Murciélago (3)").GetComponent<Murciélago>());
+                        Enemigos.Add(GameObject.Find("Murciélago (4)").GetComponent<Murciélago>());
+                        Enemigos.Add(GameObject.Find("Murciélago (5)").GetComponent<Murciélago>());
+                        Enemigos.Add(GameObject.Find("Murciélago (6)").GetComponent<Murciélago>());
+                        Enemigos.Add(GameObject.Find("Troll").GetComponent<Troll>());
+
+                        //EscaleraActual = GameObject.Find("Escalera");
+                    }
+                }
             }
         }
     }
 
+    /// <summary>
+    /// Se encarga de realizar las acciones relacionadas con el CU092 Mostrar 
+    /// inventario personaje.
+    /// </summary>
+    public void mostrarInventario()
+    {
+        if (!JuegoEnPausa)
+        {
+            JuegoEnPausa = true;
+
+            // Objetos del inventario.
+            ObjetoAgarrable[] objetos = new ObjetoAgarrable[0];
+
+            // Cantidad de cada objeto en el inventario.
+            int[] cantidades = new int[0];
+            bool[] estáEquipado = new bool[0];
+
+            obtenerObjetosInventario(ref objetos, ref estáEquipado, ref cantidades);
+
+            Pantalla.mostrarObjetosInventario(objetos, estáEquipado, cantidades);
+        } else
+        {
+            JuegoEnPausa = false;
+
+            Pantalla.ocultarInventario();
+        }
+    }
+
     // MÉTODOS
+    /*
+    /// <summary>
+    /// Elimina el maniquí creado para evitar que los enemigos se muevan al 
+    /// mismo casillero, cuando termina la animación.
+    /// </summary>
+    /// <param name="enemigo">Enemigo cuya animación terminó.</param>
+    public void eliminarManiquí(Entidad entidad)
+    {
+        entidad.eliminarManiquí();
+    }
+    */
+
+    /// <summary>
+    /// Busca los objetos del inventario del personaje.
+    /// </summary>
+    private void obtenerObjetosInventario(ref ObjetoAgarrable[] objetos, ref bool[] estáEquipado, ref int[] cantidades)
+    {
+        int cantidadObjetos = Personaje.Inventario.Detalle.Count;
+        objetos = new ObjetoAgarrable[cantidadObjetos];
+        cantidades = new int[cantidadObjetos];
+        estáEquipado = new bool[cantidadObjetos];
+
+        for (int i = 0; i < cantidadObjetos; i++)
+        {
+            objetos[i] = Personaje.Inventario.Detalle[i].ObjetoAgarrable;
+            estáEquipado[i] = Personaje.EquipoActual.esObjetoEquipado(objetos[i]);
+            cantidades[i] = Personaje.Inventario.Detalle[i].Cantidad;
+        }
+    }
+
     /// <summary>
     /// Verifica si el personaje tiene desventaja para atacar a melé.
     /// </summary>
@@ -342,7 +422,8 @@ public class ControladorJuego : MonoBehaviour {
     }
 
     /// <summary>
-    /// Verifica si hay un enemigo en la posición <c>posición</c>.
+    /// Verifica si hay un enemigo o un maniquí enemigo en la posición 
+    /// <c>posición</c>.
     /// </summary>
     /// <param name="posición">Posición a controlar.</param>
     /// <returns>Verdadero si hay un enemigo en <c>posición</c></returns>
@@ -361,13 +442,32 @@ public class ControladorJuego : MonoBehaviour {
     }
 
     /// <summary>
+    /// Verifica si el personaje o su maniquí está en la posición <c>posición</c>.
+    /// </summary>
+    /// <param name="posición">Posición a controlar.</param>
+    /// <returns>Verdadero si hay el personaje está en <c>posición</c>.</returns>
+    public bool hayPersonajeEn(Vector2 posición)
+    {
+        Vector2 p1 = posición - new Vector2(0.25f, 0.25f);
+        Vector2 p2 = posición + new Vector2(0.25f, 0.25f);
+        Collider2D collider = Physics2D.OverlapArea(p1, p2);
+
+        if (collider != null && collider.tag == "Player")
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
     /// Verifica si hay una entidad en la posición <c>posición</c>.
     /// </summary>
     /// <param name="posición">Posición a controlar.</param>
     /// <returns>Verdadero si hay una entidad en a posición.</returns>
     public bool hayEntidadEn(Vector2 posición)
     {
-        return hayEnemigoEn(posición) || posición == (Vector2) Personaje.transform.position;
+        return hayEnemigoEn(posición) || hayPersonajeEn(posición);
     }
 
     /// <summary>
@@ -413,21 +513,79 @@ public class ControladorJuego : MonoBehaviour {
     /// </summary>
     /// <param name="dirección">Entero que representa una dirección.</param>
     /// <returns>Vector con la dirección correspondiente.</returns>
-    public Vector2 obtenerDirección(int dirección)
+    public Vector2 obtenerDirección(int dirección, TamañoEntidad tamaño = TamañoEntidad.NORMAL)
     {
-        switch (dirección)
+        switch(tamaño)
         {
-            case 0:
-                return Vector2.up;
-            case 1:
-                return Vector2.left;
-            case 2:
-                return Vector2.down;
-            case 3:
-                return Vector2.right;
-            default:
-                return Vector2.zero;
+            case TamañoEntidad.NORMAL:
+                switch (dirección)
+                {
+                    case 0:
+                        return Vector2.up;
+                    case 1:
+                        return Vector2.left;
+                    case 2:
+                        return Vector2.down;
+                    case 3:
+                        return Vector2.right;
+                    default:
+                        return Vector2.zero;
+                }
+            case TamañoEntidad.GRANDE:
+                switch (dirección)
+                {
+                    case 0:
+                        return new Vector2(-0.5f, 1.5f);
+                    case 1:
+                        return new Vector2(-1.5f, 0.5f);
+                    case 2:
+                        return new Vector2(-1.5f, -0.5f);
+                    case 3:
+                        return new Vector2(-0.5f, -1.5f);
+                    case 4:
+                        return new Vector2(0.5f, -1.5f);
+                    case 5:
+                        return new Vector2(1.5f, -0.5f);
+                    case 6:
+                        return new Vector2(1.5f, 0.5f);
+                    case 7:
+                        return new Vector2(0.5f, 1.5f);
+                    default:
+                        return Vector2.zero;
+                }
+            case TamañoEntidad.GIGANTE:
+                switch (dirección)
+                {
+                    case 0:
+                        return new Vector2(0f, 2f);
+                    case 1:
+                        return new Vector2(-1f, 2f);
+                    case 2:
+                        return new Vector2(-2f, 1f);
+                    case 3:
+                        return new Vector2(-2f, 0f);
+                    case 4:
+                        return new Vector2(-2f, -1f);
+                    case 5:
+                        return new Vector2(-1f, -2f);
+                    case 6:
+                        return new Vector2(0f, -2f);
+                    case 7:
+                        return new Vector2(1f, -2f);
+                    case 8:
+                        return new Vector2(2f, -1f);
+                    case 9:
+                        return new Vector2(2f, 0f);
+                    case 10:
+                        return new Vector2(2f, 1f);
+                    case 11:
+                        return new Vector2(1f, 2f);
+                    default:
+                        return Vector2.zero;
+                }
         }
+
+        return Vector2.zero;
     }
 
     /// <summary>
@@ -572,23 +730,27 @@ public class ControladorJuego : MonoBehaviour {
     /// <returns>Verdadero si está adyacente.</returns>
     public bool estáAdyacenteAlPersonaje(Vector2 posición, TamañoEntidad tamaño)
     {
-        float distancia = 0;
+        int cantidadDirecciones = 0;
+
         switch (tamaño)
         {
             case TamañoEntidad.NORMAL:
-                distancia = 1;
+                cantidadDirecciones = 4;
                 break;
             case TamañoEntidad.GRANDE:
-                distancia = Mathf.Sqrt(2.5f);
+                cantidadDirecciones = 8;
                 break;
             case TamañoEntidad.GIGANTE:
-                distancia = Mathf.Sqrt(5);
+                cantidadDirecciones = 12;
                 break;
         }
 
-        if ((posición - Personaje.RB.position).magnitude <= distancia)
+        for (int i = 0; i < cantidadDirecciones; i++)
         {
-            return true;
+            if (hayPersonajeEn(posición + obtenerDirección(i, tamaño)))
+            {
+                return true;
+            }
         }
 
         return false;
@@ -601,7 +763,6 @@ public class ControladorJuego : MonoBehaviour {
     /// <returns>Verdadero si está en la escalera.</returns>
     public bool personajeEstáEnEscalera()
     {
-        
         Vector2 posiciónEscaleraFixed = EscaleraActual.transform.position;
 
         if ((posiciónEscaleraFixed - Personaje.RB.position).magnitude == 0)
@@ -713,6 +874,8 @@ public class ControladorJuego : MonoBehaviour {
         Enemigos.Add(GameObject.Find("Troll").GetComponent<Troll>());
 
         D20 = new Dado(20);
+
+        JuegoEnPausa = false;
     }
 
     // Update is called once per frame
@@ -720,32 +883,33 @@ public class ControladorJuego : MonoBehaviour {
     {
         switch (FaseActual)
         {
-            case FasesTurno.INICIALIZACIÓN:
+            //case FasesTurno.INICIALIZACIÓN:
 
-                break;
-            case FasesTurno.TURNO_PERSONAJE:
+            //    break;
+            //case FasesTurno.TURNO_PERSONAJE:
 
-                break;
-            case FasesTurno.ESPERANDO_ANIMACIONES_PERSONAJE:
-                if (!Pantalla.AnimaciónEnProgreso)
-                {
-                    FaseActual = FasesTurno.TURNO_ENEMIGOS;
-                }
+            //    break;
+            //case FasesTurno.ESPERANDO_ANIMACIONES_PERSONAJE:
+            //    if (!Pantalla.AnimaciónEnProgreso)
+            //    {
+            //        FaseActual = FasesTurno.TURNO_ENEMIGOS;
+            //    }
 
-                break;
+            //    break;
             case FasesTurno.TURNO_ENEMIGOS:
                 Enemigos.ForEach((enemigo) => enemigo.usarTurno());
 
-                FaseActual = FasesTurno.ESPERANDO_ANIMACIONES_ENEMIGOS;
+                FaseActual = FasesTurno.TURNO_PERSONAJE;
 
                 break;
-            case FasesTurno.ESPERANDO_ANIMACIONES_ENEMIGOS:
-                if (!Pantalla.AnimaciónEnProgreso)
-                {
-                    FaseActual = FasesTurno.TURNO_PERSONAJE;
-                }
 
-                break;
+            //case FasesTurno.ESPERANDO_ANIMACIONES_ENEMIGOS:
+            //    if (!Pantalla.AnimaciónEnProgreso)
+            //    {
+            //        FaseActual = FasesTurno.TURNO_PERSONAJE;
+            //    }
+
+            //    break;
                 //case FasesTurno.EFECTOS_ESTADOS_ALTERADOS:
 
                 //    break;

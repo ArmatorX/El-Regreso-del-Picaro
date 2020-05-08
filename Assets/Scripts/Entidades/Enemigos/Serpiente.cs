@@ -37,6 +37,8 @@ public class Serpiente : Enemigo
 
         Ventaja = false;
         Desventaja = false;
+
+        crearManiquí();
     }
 
     // Update is called once per frame

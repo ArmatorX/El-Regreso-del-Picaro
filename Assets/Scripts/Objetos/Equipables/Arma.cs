@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public abstract class Arma
+public abstract class Arma : ObjetoAgarrable
 {
     private int modificadorActual;
     private Dado dadoDaño;
