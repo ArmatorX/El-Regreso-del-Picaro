@@ -60,11 +60,6 @@ public abstract class Enemigo : Entidad
         return false;
     }
 
-    public override bool verificarSiAtaqueImpacta(int impacto)
-    {
-        return impacto >= Defensa || impacto == -1;
-    }
-
     public override void recibirDaño(int daño)
     {
         base.recibirDaño(daño);
@@ -98,7 +93,7 @@ public abstract class Enemigo : Entidad
         int daño;
         byte tipo = 1;
 
-        daño = calcularDaño(obtenerModificadorFuerza(0));
+        daño = calcularDaño(obtenerModificadorFuerza());
 
         if (impacto == -1)
         {
@@ -166,15 +161,58 @@ public abstract class Enemigo : Entidad
         return dañoBase + modificador;
     }
 
-    public override int obtenerModificadorFuerza(int modificadorMisceláneo)
+    public override int obtenerModificadorFuerza()
     {
-        return Fuerza + modificadorMisceláneo;
+        return Fuerza;
     }
 
-    public abstract Vector2 elegirDirecciónMovimiento();
+    public override int obtenerModificadorDestreza()
+    {
+        return Destreza;
+    }
+
+    public override int obtenerModificadorMagia()
+    {
+        return Magia;
+    }
+
+    public override int obtenerDefensa()
+    {
+        return Defensa;
+    }
+
+    public override int obtenerModificadorDaño(bool ataqueADistancia = false)
+    {
+        if (ataqueADistancia)
+        {
+            return Destreza;
+        } 
+        else
+        {
+            return Fuerza;
+        }
+    }
 
     public override bool esEnemigo()
     {
         return true;
     }
+
+    public override int calcularDaño(bool esCrítico = false, bool ataqueADistancia = false)
+    {
+        throw new NotImplementedException();
+    }
+    public override int obtenerModificadorImpacto(bool ataqueADistancia = false)
+    {
+        if (ataqueADistancia)
+        {
+            return obtenerModificadorDestreza();
+        }
+        else
+        {
+            return obtenerModificadorFuerza();
+        }
+    }
+
+    public abstract Vector2 elegirDirecciónMovimiento();
 }

@@ -70,9 +70,11 @@ public class Personaje : Entidad
      * <summary>
      * Mueve al personaje en una dirección determinada.
      * Se encarga de gestionar todas las tareas del movimientod del personaje,
-     * como restar puntos de comida, mostrar la animación, cambiar la ubicación, etc.
+     * como restar puntos de comida, mostrar la animación, cambiar la ubicación,
+     * etc.
      * </summary>
-     * <param name="dirección">La dirección en la que se quiere mover el personaje.</param>
+     * <param name="dirección">La dirección en la que se quiere mover el 
+     * personaje.</param>
      */
     public override void moverse(Vector2 dirección)
     {
@@ -86,8 +88,8 @@ public class Personaje : Entidad
     }
 
     /// <summary>
-    /// Crea un maniquí. Evita que los enemigos 
-    /// elijan el mismo casillero de destino que el personaje.
+    /// Crea un maniquí. Evita que los enemigos elijan el mismo casillero de 
+    /// destino que el personaje.
     /// </summary>
     public void crearManiquí()
     {
@@ -137,28 +139,24 @@ public class Personaje : Entidad
         }
     }
 
+    /// <summary>
+    /// Ataca a una entidad que se encuentra adyacente al personaje con el arma 
+    /// equipada.
+    /// </summary>
+    /// <param name="objetivo">Entidad que recibe el ataque.</param>
+    /// <param name="modificadorMisceláneo">Modificador que se aplica en casos 
+    /// específicos, como a enemigos voladores.</param>
     public void atacarCuerpoACuerpo(Entidad objetivo, int modificadorMisceláneo)
     {
         int impacto = calcularImpacto(modificadorMisceláneo);
-        int daño = 0;
+        bool esCrítico = impacto == -1;
+        int daño = calcularDaño(esCrítico, false);
         byte tipo = 1;
 
-        if (!armaEquipadaEstáVorpalizada())
+        if (tieneArmaVorpalizada())
         {
-            daño = calcularDaño(obtenerModificadorFuerza(modificadorMisceláneo));
-
-            if (daño <= 0)
-            {
-                daño = 1;
-            }
-
-            if (impacto == -1)
-            {
-                daño *= 2;
-                tipo = 2;
-            }
+            
         }
-
 
         if (!realizarAtaque(objetivo, impacto, daño))
         {
@@ -170,42 +168,82 @@ public class Personaje : Entidad
         Controlador.animaciónAtaqueMeléPersonaje(objetivo, daño, tipo);
     }
 
+    /// <summary>
+    /// Realiza el ataque del personaje a una entidad.
+    /// Es decir, concreta el ataque. Todos los cálculos ya fueron hechos en 
+    /// este punto. Sólo verifica si el ataque impacta.
+    /// </summary>
+    /// <param name="objetivo">Entidad que recibe el ataque.</param>
+    /// <param name="impacto">Impacto del ataque. -1 si es crítico.</param>
+    /// <param name="daño">Daño del ataque. siempre es mayor o igual a 1. No 
+    /// hay daño negativo.</param>
+    /// <returns>Verdadero si el ataque impacta.</returns>
     public bool realizarAtaque(Entidad objetivo, int impacto, int daño)
     {
         return Controlador.realizarAtaque(objetivo, impacto, daño);
     }
 
-    public int calcularDaño(int modificador)
+    /// <summary>
+    /// Calcula el daño que realiza el personaje.
+    /// </summary>
+    /// <param name="esCrítico">Indica si el ataque es crítico.</param>
+    /// <param name="ataqueADistancia">Indica si el ataque es a distancia.</param>
+    /// <returns>Puntos de daño del ataque.</returns>
+    public override int calcularDaño(bool esCrítico = false, bool ataqueADistancia = false)
     {
-        int cantidadDadosDaño = NivelActual.obtenerCantidadDadosDaño();
+        int daño = EquipoActual.calcularDañoBase();
 
-        int dañoBase = EquipoActual.calcularDañoBase(cantidadDadosDaño);
+        if (obtenerModificadorDaño(ataqueADistancia) > 0)
+        {
+            daño += obtenerModificadorDaño(ataqueADistancia);
+        }
 
-        return dañoBase + modificador;
+        if (esCrítico)
+        {
+            daño *= 2;
+        }
+
+        return daño;
     }
 
-    public bool armaEquipadaEstáVorpalizada()
+    /// <summary>
+    /// Verifica si el arma equipada está vorpalizada.
+    /// </summary>
+    /// <returns>Devuelve verdadero si hay arma equipada vorpalizada.</returns>
+    public bool tieneArmaVorpalizada()
     {
-        return EquipoActual.armaEquipadaEstáVorpalizada();
+        return EquipoActual.armaEstáVorpalizada();
     }
 
-    public override int obtenerModificadorFuerza(int modificadorMisceláneo)
+    /// <summary>
+    /// Obtiene el modificador de fuerza del personaje, teniendo en cuenta los modificadores 
+    /// del equipo y estados alterados.
+    /// </summary>
+    /// <returns>Modificador de fuerza.</returns>
+    public override int obtenerModificadorFuerza()
     {
         int modificador = 0;
-        modificador += obtenerModificadorFuerzaBase();
-        modificador += obtenerModificadoresEquipoParaFuerza();
-        modificador += modificadorMisceláneo;
+        modificador += obtenerModificadorFuerzaEstadísticas();
+        modificador += obtenerModificadorFuerzaEquipo();
         return modificador;
     }
 
-    public int obtenerModificadoresEquipoParaFuerza()
+    /// <summary>
+    /// Obtiene los modificadores de fuerza otorgados por los objetos equipados.
+    /// </summary>
+    /// <returns>Modificador de fuerza.</returns>
+    public int obtenerModificadorFuerzaEquipo()
     {
-        return EquipoActual.obtenerModificadoresEquipoParaFuerza();
+        return EquipoActual.obtenerModificadorFuerza();
     }
 
-    public int obtenerModificadorFuerzaBase()
+    /// <summary>
+    /// Devuelve el modificador de fuerza otorgado por el nivel actual.
+    /// </summary>
+    /// <returns>Modificador de fuerza.</returns>
+    public int obtenerModificadorFuerzaEstadísticas()
     {
-        return NivelActual.obtenerModificadorFuerzaBase();
+        return NivelActual.obtenerModificadorFuerza();
     }
 
     /// <summary>
@@ -227,6 +265,11 @@ public class Personaje : Entidad
         return false;
     }
 
+    /// <summary>
+    /// Resta puntos de vida al personaje, y si llega a 0, setea el estado en 
+    /// "Muerto".
+    /// </summary>
+    /// <param name="daño">Daño recibido.</param>
     public override void recibirDaño(int daño)
     {
         base.recibirDaño(daño);
@@ -237,38 +280,164 @@ public class Personaje : Entidad
             Estados.Add(new EstadoPersonaje(EstadosPersonaje.MUERTO));
         }
     }
-
-    public override bool verificarSiAtaqueImpacta(int impacto)
-    {
-        return impacto >= obtenerDefensa() || impacto == -1;
-    }
-
-    public int obtenerDefensa()
+    
+    /// <summary>
+    /// Obtiene la defensa del personaje, teniendo en cuenta el equipo que lleva.
+    /// </summary>
+    /// <returns>Defensa.</returns>
+    public override int obtenerDefensa()
     {
         int defensa = 0;
-        defensa += obtenerDefensaBase();
-        defensa += obtenerModificadoresEquipoParaDefensa();
+        defensa += obtenerDefensaEstadísticas();
+        defensa += obtenerModificadorDefensaEquipo();
         return defensa;
     }
 
-    public int obtenerModificadoresEquipoParaDefensa()
+    /// <summary>
+    /// Obtiene los modificadores de defensa que provienen del equipo.
+    /// </summary>
+    /// <returns>Modificador de defensa.</returns>
+    public int obtenerModificadorDefensaEquipo()
     {
-        return EquipoActual.obtenerModificadoresEquipoParaDefensa();
+        return EquipoActual.obtenerModificadorDefensa();
     }
 
-    public int obtenerDefensaBase()
+    /// <summary>
+    /// Obtiene la defensa que determina el nivel.
+    /// </summary>
+    /// <returns>Defensa.</returns>
+    public int obtenerDefensaEstadísticas()
     {
-        return NivelActual.obtenerDefensaBase();
+        return NivelActual.Estadísticas.Defensa;
     }
     
+    /// <summary>
+    /// Obtiene la cantidad máxima de puntos de vida del personaje.
+    /// </summary>
+    /// <returns>Vida máxima.</returns>
     public int obtenerVidaMáxima()
     {
-        return NivelActual.obtenerVidaMáxima();
+        return NivelActual.Estadísticas.VidaMáxima;
     }
 
+    /// <summary>
+    /// Verifica si el personaje es un enemigo.
+    /// </summary>
+    /// <returns>Siempre devuelve false.</returns>
     public override bool esEnemigo()
     {
         return false;
+    }
+
+    /// <summary>
+    /// Obtiene el modificador de destreza del personaje, teniendo en cuenta los 
+    /// modificadores del equipo y estados alterados.
+    /// </summary>
+    /// <returns>Modificador de destreza.</returns>
+    public override int obtenerModificadorDestreza()
+    {
+        int destreza = 0;
+        destreza += obtenerModificadorDestrezaEstadísticas();
+        destreza += obtenerModificadorDestrezaEquipo();
+        return destreza;
+    }
+
+    /// <summary>
+    /// Devuelve el modificador de destreza otorgado por el nivel actual.
+    /// </summary>
+    /// <returns>Modificador de destreza.</returns>
+    public int obtenerModificadorDestrezaEstadísticas()
+    {
+        return NivelActual.obtenerModificadorDestreza(); 
+    }
+
+    /// <summary>
+    /// Obtiene los modificadores de destreza otorgados por los objetos equipados.
+    /// </summary>
+    /// <returns>Modificador de destreza.</returns>
+    public int obtenerModificadorDestrezaEquipo()
+    {
+        return EquipoActual.obtenerModificadorDestreza();
+    }
+
+    /// <summary>
+    /// Obtiene los modificadores de magia, incluyendo los modificadores
+    /// otorgados por los objetos equipados y estados alterados.
+    /// </summary>
+    /// <returns>Modificador de magia.</returns>
+    public override int obtenerModificadorMagia()
+    {
+        int modificador = 0;
+        modificador += obtenerModificadorMagiaEstadísticas();
+        modificador += obtenerModificadorMagiaEquipo();
+        return modificador;
+    }
+
+    /// <summary>
+    /// Devuelve el modificador de magia otorgado por el nivel actual.
+    /// </summary>
+    /// <returns>Modificador de magia.</returns>
+    public int obtenerModificadorMagiaEstadísticas()
+    {
+        return NivelActual.obtenerModificadorMagia();
+    }
+
+    /// <summary>
+    /// Obtiene los modificadores de magia otorgados por los objetos equipados.
+    /// </summary>
+    /// <returns>Modificador de destreza.</returns>
+    public int obtenerModificadorMagiaEquipo()
+    {
+        return EquipoActual.obtenerModificadorMagia();
+    }
+
+    /// <summary>
+    /// Obtiene el modificador que aplica al daño que realiza el personaje, 
+    /// teniendo en cuenta objetos equipados y estados alterados.
+    /// </summary>
+    /// <param name="ataqueADistancia">Indica si el ataque a realizar es
+    /// un ataque a distancia.</param>
+    /// <returns>Modificador de daño.</returns>
+    public override int obtenerModificadorDaño(bool ataqueADistancia = false)
+    {
+        int modificador = 0;
+        modificador += EquipoActual.obtenerModificadorDaño();
+
+        if (ataqueADistancia)
+        {
+            modificador += obtenerModificadorDestreza();
+        }
+        else
+        {
+            modificador += obtenerModificadorFuerza();
+        }
+
+        return modificador;
+    }
+
+    // TODO: ataqueMelé quiero que sea un byte, pero esto es más rápido. Por el tema de que magia va a usar el mismo.
+    /// <summary>
+    /// Obtiene el modificador de impacto del personaje, sumando la destreza o 
+    /// la fuerza dependiendo si el ataque es a distancia, o melé.
+    /// </summary>
+    /// <param name="ataqueADistancia">Verdadero indica que se trata de un 
+    /// ataque a distancia.</param>
+    /// <returns>Modificador impacto.</returns>
+    public override int obtenerModificadorImpacto(bool ataqueADistancia = false)
+    {
+        int modificador = 0;
+        modificador += EquipoActual.obtenerModificadorImpacto();
+
+        if (ataqueADistancia)
+        {
+            modificador += obtenerModificadorDestreza();
+        }
+        else
+        {
+            modificador += obtenerModificadorFuerza();
+        }
+
+        return modificador;
     }
 
     // MÉTODOS DE UNITY

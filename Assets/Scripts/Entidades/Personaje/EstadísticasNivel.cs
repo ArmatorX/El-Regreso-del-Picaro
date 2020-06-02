@@ -12,7 +12,6 @@ public class EstadísticasNivel
     private int comidaMáxima;
     private int cantidadDadosDaño;
 
-
     public EstadísticasNivel(int fuerza, int destreza, int defensa, int magia, int vidaMáxima, int comidaMáxima, int cantidadDadosDaño)
     {
         this.Fuerza = fuerza;
@@ -37,7 +36,7 @@ public class EstadísticasNivel
     /// calcular el impacto.
     /// </summary>
     /// <returns>Modificador fuerza base.</returns>
-    public int calcularModificadorFuerzaBase()
+    public int calcularModificadorFuerza()
     {
         return Mathf.FloorToInt((Fuerza - 10) / 2);
     }
@@ -47,7 +46,7 @@ public class EstadísticasNivel
     /// calcular el impacto.
     /// </summary>
     /// <returns>Modificador destreza base.</returns>
-    public int calcularModificadorDestrezaBase()
+    public int calcularModificadorDestreza()
     {
         return Mathf.FloorToInt((Destreza - 10) / 2);
     }
@@ -57,7 +56,7 @@ public class EstadísticasNivel
     /// calcular el impacto.
     /// </summary>
     /// <returns>Modificador magia base.</returns>
-    public int calcularModificadorMagiaBase()
+    public int calcularModificadorMagia()
     {
         return Mathf.FloorToInt((Magia - 10) / 2);
     }

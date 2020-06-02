@@ -74,4 +74,19 @@ public class EstadoPersonaje
         }
         return false;
     }
+
+    /// <summary>
+    /// Verifica si dos estados son iguales.
+    /// </summary>
+    /// <param name="estado">Un objeto de tipo <c>EstadoPersonaje</c>.</param>
+    /// <returns>Verdadero, si ambos estados son iguales.</returns>
+    public override bool Equals(object estado)
+    {
+        if (Nombre == ((EstadoPersonaje) estado).Nombre)
+        {
+            return true;
+        }
+
+        return false;
+    }
 }

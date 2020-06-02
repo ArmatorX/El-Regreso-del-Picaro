@@ -9,5 +9,4 @@
 
     public EstadosEnemigo Nombre { get => nombre; set => nombre = value; }
 
-    
 }

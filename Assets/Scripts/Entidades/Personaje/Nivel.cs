@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-public class Nivel
+﻿public class Nivel
 {
     private int número;
     private int experienciaMínima;
@@ -23,32 +18,18 @@ public class Nivel
     public int ExperienciaMáxima { get => experienciaMáxima; set => experienciaMáxima = value; }
     public EstadísticasNivel Estadísticas { get => estadísticas; set => estadísticas = value; }
 
-    public int obtenerModificadorFuerzaBase()
+    public int obtenerModificadorFuerza()
     {
-        return Estadísticas.calcularModificadorFuerzaBase();
+        return Estadísticas.calcularModificadorFuerza();
     }
 
-    public int obtenerModificadorDestrezaBase()
+    public int obtenerModificadorDestreza()
     {
-        return Estadísticas.calcularModificadorDestrezaBase();
+        return Estadísticas.calcularModificadorDestreza();
     }
 
-    public int obtenerModificadorMagiaBase()
+    public int obtenerModificadorMagia()
     {
-        return Estadísticas.calcularModificadorMagiaBase();
-    }
-
-    public int obtenerCantidadDadosDaño()
-    {
-        return Estadísticas.CantidadDadosDaño;
-    }
-
-    public int obtenerDefensaBase()
-    {
-        return Estadísticas.Defensa;
-    }
-    public int obtenerVidaMáxima()
-    {
-        return Estadísticas.VidaMáxima;
+        return Estadísticas.calcularModificadorMagia();
     }
 }

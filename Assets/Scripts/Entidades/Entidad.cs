@@ -37,36 +37,75 @@ public abstract class Entidad : MonoBehaviour
     public bool Ventaja
     {
         get => ventaja;
-        // Estoy seguro que para este set armé una tabla de verdad.
-        set => ventaja = value && !desventaja;
+        set
+        {
+            if (value && desventaja)
+            {
+                desventaja = false;
+            } 
+            else
+            {
+                ventaja = value;
+            }
+        }
     }
     public bool Desventaja
     {
         get => desventaja;
-        // Estoy seguro que para este set armé una tabla de verdad.
-        set => desventaja = value && !ventaja;
+        set
+        {
+            if (value && ventaja)
+            {
+                ventaja = false;
+            }
+            else
+            {
+                desventaja = value;
+            }
+        }
     }
     public TamañoEntidad Tamaño { get => tamaño; set => tamaño = value; }
     public GameObject Maniquí { get => maniquí; set => maniquí = value; }
 
-    public int calcularImpacto(int modificadorMisceláneo)
+    // TODO: ataqueMelé quiero que sea un byte, pero esto es más rápido. Por el tema de que magia va a usar el mismo.
+    /// <summary>
+    /// Calcula el impacto de un ataque.
+    /// </summary>
+    /// <param name="modificadorMisceláneo">Modificador que se aplica sobre
+    /// la tirada, que depende del contexto en que se realizó.</param>
+    /// <param name="ataqueADistancia">Determina si se usa el modificador de 
+    /// fuerza o de destreza.</param>
+    /// <returns>Impacto del ataque.</returns>
+    public int calcularImpacto(int modificadorMisceláneo, bool ataqueADistancia = false)
     {
         int impacto = 0;
-
         impacto += Controlador.tirarD20(Ventaja, Desventaja);
 
         if (impacto == 20)
         {
             impacto = -1;
-        }
+        } 
         else
         {
-            impacto += obtenerModificadorFuerza(modificadorMisceláneo);
+            impacto += obtenerModificadorImpacto(ataqueADistancia) + modificadorMisceláneo;
         }
 
         return impacto;
     }
 
+    
+
+    /// <summary>
+    /// Si el ataque impacta, entonces resta los puntos de vida correspondientes
+    /// al daño.
+    /// </summary>
+    /// <remarks>
+    /// Si el ataque es crítico, el método simplemente verifica si impacta.
+    /// El daño se duplica en el ataque.
+    /// </remarks>
+    /// <param name="impacto">Impacto.</param>
+    /// <param name="daño">Puntos de daño.</param>
+    /// <returns>Verdadero si el ataque impacta.</returns>
     public bool recibirAtaque(int impacto, int daño)
     {
         if (verificarSiAtaqueImpacta(impacto) || impacto == -1)
@@ -78,6 +117,10 @@ public abstract class Entidad : MonoBehaviour
         return false;
     }
 
+    /// <summary>
+    /// Resta puntos de vida a la entidad.
+    /// </summary>
+    /// <param name="daño">Cantidad de puntos de vida a restar.</param>
     public virtual void recibirDaño(int daño)
     {
         if (VidaActual <= daño)
@@ -89,6 +132,19 @@ public abstract class Entidad : MonoBehaviour
             VidaActual -= daño;
         }
     }
+
+    /// <summary>
+    /// Verifica si el ataque impacta.
+    /// Verifica si el impacto es mayor que la defensa de la entidad.
+    /// </summary>
+    /// <param name="impacto">El impacto del ataque. Si es -1 el ataque impacta 
+    /// siempre.</param>
+    /// <returns>Devuelve verdadero si el ataque es efectivo.</returns>
+    public bool verificarSiAtaqueImpacta(int impacto)
+    {
+        return impacto >= obtenerDefensa() || impacto == -1;
+    }
+
     /*
     /// <summary>
     /// Elimina la instancia del GameObject de maniquí.
@@ -98,20 +154,72 @@ public abstract class Entidad : MonoBehaviour
         Destroy(Maniquí);
     }
     */
-    /**
-     * <summary>
-     * Se encarga de mover a la entidad en una dirección determinada.
-     * </summary>
-     * <param name="dirección">La dirección en que se quiere mover la entidad.</param> 
-     */
-    public abstract void moverse(Vector2 dirección);
+
+    // MÉTODOS ABSTRACTOS.
     /// <summary>
-    /// 
+    /// Mueve la entidad en una dirección.
     /// </summary>
-    /// <param name="impacto">El impacto del ataque. Si es -1 el ataque impacta 
-    /// siempre.</param>
-    /// <returns></returns>
-    public abstract bool verificarSiAtaqueImpacta(int impacto);
-    public abstract int obtenerModificadorFuerza(int modificadorMisceláneo);
+    /// <param name="dirección">Dirección en la que se quiere mover.</param>
+    public abstract void moverse(Vector2 dirección);
+
+    // TODO: ataqueMelé quiero que sea un byte, pero esto es más rápido. Por el tema de que magia va a usar el mismo.
+    /// <summary>
+    /// Calcula el daño de un ataque de la entidad.
+    /// </summary>
+    /// <param name="esCrítico">Verdadero indica que el ataque es crítico.</param>
+    /// <param name="ataqueADistancia">Verdadero indica que se trata de un 
+    /// ataque a distancia.</param>
+    /// <returns>Cantidad de puntos de daño del ataque.</returns>
+    public abstract int calcularDaño(bool esCrítico = false, bool ataqueADistancia = false);
+
+    // TODO: Los enemigos guardan el modificador. Por ahí habría que cambiarlo.
+    /// <summary>
+    /// Obtiene el modificador de fuerza de la entidad.
+    /// </summary>
+    /// <returns>Modificador de fuerza.</returns>
+    public abstract int obtenerModificadorFuerza();
+
+    /// <summary>
+    /// Obtiene el modificador de destreza de la entidad.
+    /// </summary>
+    /// <returns>Modificador de destreza.</returns>
+    public abstract int obtenerModificadorDestreza();
+
+    /// <summary>
+    /// Obtiene el modificador de magia de la entidad.
+    /// </summary>
+    /// <returns>Modificador de magia.</returns>
+    public abstract int obtenerModificadorMagia();
+
+    /// <summary>
+    /// Obtiene la defensa de la entidad.
+    /// </summary>
+    /// <returns>Defensa.</returns>
+    public abstract int obtenerDefensa();
+
+    // TODO: ataqueMelé quiero que sea un byte, pero esto es más rápido. Por el tema de que magia va a usar el mismo.
+    /// <summary>
+    /// Obtiene el modificador de daño de la entidad, sumando la destreza o la 
+    /// fuerza dependiendo si el ataque es a distancia, o a melé.
+    /// </summary>
+    /// <param name="ataqueADistancia">Verdadero indica que se trata de un 
+    /// ataque a distancia.</param>
+    /// <returns>Modificador daño.</returns>
+    public abstract int obtenerModificadorDaño(bool ataqueADistancia = false);
+
+    /// <summary>
+    /// Verifica si esta entidad es un enemigo.
+    /// </summary>
+    /// <returns>Verdadero si es un enemigo.</returns>
     public abstract bool esEnemigo();
+
+    // TODO: ataqueMelé quiero que sea un byte, pero esto es más rápido. Por el tema de que magia va a usar el mismo.
+    /// <summary>
+    /// Obtiene el modificador de impacto de la entidad, sumando la destreza o 
+    /// la fuerza dependiendo si el ataque es a distancia, o melé.
+    /// </summary>
+    /// <param name="ataqueADistancia">Verdadero indica que se trata de un 
+    /// ataque a distancia.</param>
+    /// <returns>Modificador impacto.</returns>
+    public abstract int obtenerModificadorImpacto(bool ataqueADistancia = false);
 }
