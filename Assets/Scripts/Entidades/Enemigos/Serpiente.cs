@@ -7,6 +7,12 @@ public class Serpiente : Enemigo
     private Vector2 direcciónAnterior;
     public Vector2 DirecciónAnterior { get => direcciónAnterior; set => direcciónAnterior = value; }
 
+    /// <summary>
+    /// Elige una dirección para mover a la serpiente.
+    /// </summary>
+    /// <remarks>La serpiente se mueve de forma aleatoria el 20% de las veces,
+    /// y el resto utiliza la dirección anterior.</remarks>
+    /// <returns>Dirección movimiento.</returns>
     public override Vector2 elegirDirecciónMovimiento()
     {
         int nro = Controlador.tirarD20(false, false);

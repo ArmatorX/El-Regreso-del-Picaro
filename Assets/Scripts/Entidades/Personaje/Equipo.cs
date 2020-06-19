@@ -35,37 +35,37 @@ public class Equipo
     /// <param name="objeto">Objeto equipable.</param>
     public void equiparObjeto(ObjetoAgarrable objeto)
     {
-        if (objeto.GetType() == typeof(Arma))
+        if (objeto is Arma arma)
         {
             if (!hayArmaEquipada())
             {
-                ArmaEquipada = (Arma) objeto;
+                ArmaEquipada = arma;
             } 
             else
             {
                 throw new InvalidOperationException("Se intentó equipar un arma, pero ya había un arma equipada.");
             }
         }
-        else if (objeto.GetType() == typeof(Armadura))
+        else if (objeto is Armadura armadura)
         {
             if (!hayArmaduraEquipada())
             {
-                ArmaduraEquipada = (Armadura) objeto;
+                ArmaduraEquipada = armadura;
             }
             else
             {
                 throw new InvalidOperationException("Se intentó equipar una armadura, pero ya había una armadura equipada.");
             }
         }
-        else if (objeto.GetType() == typeof(Anillo))
+        else if (objeto is Anillo anillo)
         {
             if (!hayAnillo1Equipado())
             {
-                Anillo1Equipado = (Anillo) objeto;
+                Anillo1Equipado = anillo;
             }
             else if (!hayAnillo2Equipado())
             {
-                Anillo2Equipado = (Anillo) objeto;
+                Anillo2Equipado = anillo;
             }
             else
             {
@@ -269,7 +269,8 @@ public class Equipo
         else if (objetoAgarrable is Armadura)
         {
             return esArmaduraEquipada((Armadura) objetoAgarrable);
-        } else
+        } 
+        else
         {
             return false;
         }

@@ -897,7 +897,7 @@ public class ControladorJuego : MonoBehaviour {
 
             //    break;
             case FasesTurno.TURNO_ENEMIGOS:
-                Enemigos.ForEach((enemigo) => enemigo.usarTurno());
+                Enemigos.ForEach((enemigo) => enemigo.usarTurno(0));
 
                 FaseActual = FasesTurno.TURNO_PERSONAJE;
 

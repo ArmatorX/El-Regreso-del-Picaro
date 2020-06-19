@@ -47,6 +47,11 @@ public abstract class Enemigo : Entidad
     }
     */
 
+    /// <summary>
+    /// Verifica si el enemigo está en un estado.
+    /// </summary>
+    /// <param name="estado">Estado a verificar.</param>
+    /// <returns>Verdadero, si el enemigo está en el estado.</returns>
     public bool estáEnEstado(EstadosEnemigo estado)
     {
         foreach (EstadoEnemigo estadoAux in Estados)
@@ -60,6 +65,11 @@ public abstract class Enemigo : Entidad
         return false;
     }
 
+    /// <summary>
+    /// Aplica el daño al enemigo y si su <c>VidaActual</c> es 0, lo coloca en 
+    /// el estado "Muerto".
+    /// </summary>
+    /// <param name="daño">Puntos de daño recibidos.</param>
     public override void recibirDaño(int daño)
     {
         base.recibirDaño(daño);
@@ -70,12 +80,18 @@ public abstract class Enemigo : Entidad
             Estados.Add(new EstadoEnemigo(EstadosEnemigo.MUERTO));
         }
     }
-
-    public virtual void usarTurno()
+    
+    /// <summary>
+    /// Utiliza el turno del enemigo. Si el personaje se encuentra en un 
+    /// casillero adyacente, lo ataca. De otro modo, se mueve.
+    /// </summary>
+    /// <param name="modificadorMisceláneo">Modificador que aplica en ocasiones
+    /// especiales, como estados alterados.</param>
+    public virtual void usarTurno(int modificadorMisceláneo)
     {
         if (estoyAdyacenteAlPersonaje())
         {
-            realizarAtaqueMelé();
+            atacarCuerpoACuerpo(modificadorMisceláneo);
         }
         else
         {
@@ -87,19 +103,25 @@ public abstract class Enemigo : Entidad
             }
         }
     }
-    public virtual void realizarAtaqueMelé()
-    {
-        int impacto = calcularImpacto(0);
-        int daño;
-        byte tipo = 1;
 
-        daño = calcularDaño(obtenerModificadorFuerza());
+    /// <summary>
+    /// Ataca al personaje con un ataque básico.
+    /// </summary>
+    /// <param name="modificadorMisceláneo">Modificador que aplica en ocasiones
+    /// especiales, como estados alterados.</param>
+    public virtual void atacarCuerpoACuerpo(int modificadorMisceláneo)
+    {
+        int impacto = calcularImpacto(modificadorMisceláneo);
+        byte tipo = 1;
+        bool esCrítico = false;
 
         if (impacto == -1)
         {
-            daño *= 2;
             tipo = 2;
+            esCrítico = true;
         }
+
+        int daño = calcularDaño(esCrítico, false);
 
         if (!realizarAtaque(impacto, daño))
         {
@@ -115,7 +137,16 @@ public abstract class Enemigo : Entidad
         Controlador.animaciónMovimientoEnemigo(this, dirección);
         //crearManiquí(dirección);
     }
-    
+
+    /// <summary>
+    /// Calcula el daño del ataque base (sin modificadores) del enemigo.
+    /// </summary>
+    /// <returns>Daño ataque base.</returns>
+    public override int calcularDañoBase()
+    {
+        return DadoDañoAtaqueBase.tirarDados(CantidadDadosDañoAtaqueBase);
+    }
+
     /// <summary>
     /// Crea un maniquí. Evita que dos enemigos 
     /// elijan el mismo casillero como destino.
@@ -145,63 +176,97 @@ public abstract class Enemigo : Entidad
         Maniquí.transform.position += (Vector3)dirección;
     }
 
+    /// <summary>
+    /// Verifica si el enemigo se encuentra en un casillero adyacente al 
+    /// personaje.
+    /// </summary>
+    /// <returns>Verdadero, si está adyacente al personaje.</returns>
     public bool estoyAdyacenteAlPersonaje()
     {
         return Controlador.estáAdyacenteAlPersonaje(RB.position, Tamaño);
     }
 
+    /// <summary>
+    /// Ejecuta el ataque. Es decir, delega al <c>ControladorJuego</c> la tarea 
+    /// de verificar si el ataque impacta y aplicar el daño correspondiente.
+    /// </summary>
+    /// <param name="impacto">Valor de impacto. -1 si es crítico.</param>
+    /// <param name="daño">Puntos de daño.</param>
+    /// <returns>Verdadero si el ataque impacta.</returns>
     public bool realizarAtaque(int impacto, int daño)
     {
         return Controlador.realizarAtaque(Controlador.Personaje, impacto, daño);
     }
 
-    public int calcularDaño(int modificador)
-    {
-        int dañoBase = DadoDañoAtaqueBase.tirarDados(CantidadDadosDañoAtaqueBase);
-        return dañoBase + modificador;
-    }
-
+    /// <summary>
+    /// Calcula el modificador de la <c>Fuerza</c> del enemigo.
+    /// </summary>
+    /// <returns>Modificador de Fuerza.</returns>
     public override int obtenerModificadorFuerza()
     {
-        return Fuerza;
+        return Mathf.FloorToInt((Fuerza - 10) / 2);
     }
 
+    /// <summary>
+    /// Calcula el modificador de la <c>Destreza</c> del enemigo.
+    /// </summary>
+    /// <returns>Modificador de Destreza.</returns>
     public override int obtenerModificadorDestreza()
     {
-        return Destreza;
+        return Mathf.FloorToInt((Destreza - 10) / 2);
     }
 
+    /// <summary>
+    /// Calcula el modificador de la <c>Magia</c> del enemigo.
+    /// </summary>
+    /// <returns>Modificador de Magia.</returns>
     public override int obtenerModificadorMagia()
     {
-        return Magia;
+        return Mathf.FloorToInt((Magia - 10) / 2);
     }
 
+    /// <summary>
+    /// Devuelve la Defensa del enemigo. Es equivalente a un get a la propiedad.
+    /// </summary>
+    /// <returns>Defensa.</returns>
     public override int obtenerDefensa()
     {
         return Defensa;
     }
 
+    /// <summary>
+    /// Devuelve el modificador de daño del enemigo.
+    /// </summary>
+    /// <param name="ataqueADistancia">Indica si se trata de un ataque a 
+    /// distancia.</param>
+    /// <returns>Modifcador de daño.</returns>
     public override int obtenerModificadorDaño(bool ataqueADistancia = false)
     {
         if (ataqueADistancia)
         {
-            return Destreza;
+            return obtenerModificadorDestreza();
         } 
         else
         {
-            return Fuerza;
+            return obtenerModificadorFuerza();
         }
     }
 
+    /// <summary>
+    /// Permite controlar si una entidad es un enemigo.
+    /// </summary>
+    /// <returns>Siempre devuelve verdadero.</returns>
     public override bool esEnemigo()
     {
         return true;
     }
 
-    public override int calcularDaño(bool esCrítico = false, bool ataqueADistancia = false)
-    {
-        throw new NotImplementedException();
-    }
+    /// <summary>
+    /// Obtiene el modificador de impacto del enemigo.
+    /// </summary>
+    /// <param name="ataqueADistancia">Indica si se trata de un ataque a 
+    /// distancia.</param>
+    /// <returns>Modificador de impacto.</returns>
     public override int obtenerModificadorImpacto(bool ataqueADistancia = false)
     {
         if (ataqueADistancia)

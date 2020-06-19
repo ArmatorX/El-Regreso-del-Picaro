@@ -149,9 +149,16 @@ public class Personaje : Entidad
     public void atacarCuerpoACuerpo(Entidad objetivo, int modificadorMisceláneo)
     {
         int impacto = calcularImpacto(modificadorMisceláneo);
-        bool esCrítico = impacto == -1;
-        int daño = calcularDaño(esCrítico, false);
         byte tipo = 1;
+        bool esCrítico = false;
+
+        if (impacto == -1)
+        {
+            tipo = 2;
+            esCrítico = true;
+        }
+
+        int daño = calcularDaño(esCrítico, false);
 
         if (tieneArmaVorpalizada())
         {
@@ -184,26 +191,12 @@ public class Personaje : Entidad
     }
 
     /// <summary>
-    /// Calcula el daño que realiza el personaje.
+    /// Calcula el daño base (sin modificadores) que realiza el personaje.
     /// </summary>
-    /// <param name="esCrítico">Indica si el ataque es crítico.</param>
-    /// <param name="ataqueADistancia">Indica si el ataque es a distancia.</param>
-    /// <returns>Puntos de daño del ataque.</returns>
-    public override int calcularDaño(bool esCrítico = false, bool ataqueADistancia = false)
+    /// <returns>Puntos de daño base del ataque.</returns>
+    public override int calcularDañoBase()
     {
-        int daño = EquipoActual.calcularDañoBase();
-
-        if (obtenerModificadorDaño(ataqueADistancia) > 0)
-        {
-            daño += obtenerModificadorDaño(ataqueADistancia);
-        }
-
-        if (esCrítico)
-        {
-            daño *= 2;
-        }
-
-        return daño;
+        return EquipoActual.calcularDañoBase();
     }
 
     /// <summary>

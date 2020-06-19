@@ -93,8 +93,6 @@ public abstract class Entidad : MonoBehaviour
         return impacto;
     }
 
-    
-
     /// <summary>
     /// Si el ataque impacta, entonces resta los puntos de vida correspondientes
     /// al daño.
@@ -145,6 +143,30 @@ public abstract class Entidad : MonoBehaviour
         return impacto >= obtenerDefensa() || impacto == -1;
     }
 
+    /// <summary>
+    /// Calcula el daño de un ataque de la entidad.
+    /// </summary>
+    /// <param name="esCrítico">Verdadero indica que el ataque es crítico.</param>
+    /// <param name="ataqueADistancia">Verdadero indica que se trata de un 
+    /// ataque a distancia.</param>
+    /// <returns>Cantidad de puntos de daño del ataque.</returns>
+    public int calcularDaño(bool esCrítico = false, bool ataqueADistancia = false)
+    {
+        int daño = calcularDañoBase();
+
+        if (obtenerModificadorDaño(ataqueADistancia) > 0)
+        {
+            daño += obtenerModificadorDaño(ataqueADistancia);
+        }
+
+        if (esCrítico)
+        {
+            daño *= 2;
+        }
+
+        return daño;
+    }
+
     /*
     /// <summary>
     /// Elimina la instancia del GameObject de maniquí.
@@ -162,15 +184,12 @@ public abstract class Entidad : MonoBehaviour
     /// <param name="dirección">Dirección en la que se quiere mover.</param>
     public abstract void moverse(Vector2 dirección);
 
-    // TODO: ataqueMelé quiero que sea un byte, pero esto es más rápido. Por el tema de que magia va a usar el mismo.
     /// <summary>
-    /// Calcula el daño de un ataque de la entidad.
+    /// Calcula el daño base (tirada de dados) de la entidadd.
     /// </summary>
-    /// <param name="esCrítico">Verdadero indica que el ataque es crítico.</param>
-    /// <param name="ataqueADistancia">Verdadero indica que se trata de un 
-    /// ataque a distancia.</param>
-    /// <returns>Cantidad de puntos de daño del ataque.</returns>
-    public abstract int calcularDaño(bool esCrítico = false, bool ataqueADistancia = false);
+    /// <returns>Cantidad de puntos de daño base (sin modificadores) del 
+    /// ataque.</returns>
+    public abstract int calcularDañoBase();
 
     // TODO: Los enemigos guardan el modificador. Por ahí habría que cambiarlo.
     /// <summary>

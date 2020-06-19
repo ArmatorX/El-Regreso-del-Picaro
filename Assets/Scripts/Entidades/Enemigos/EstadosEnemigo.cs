@@ -3,5 +3,9 @@
     INVISIBLE,
     NORMAL,
     MUERTO,
-    VOLANDO
+    VOLANDO,
+    ENVENENADO,
+    CEGADO,
+    EN_LLAMAS,
+    HAMBRIENTO
 }

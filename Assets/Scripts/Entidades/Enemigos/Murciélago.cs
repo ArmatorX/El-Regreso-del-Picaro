@@ -5,6 +5,11 @@ using UnityEngine;
 
 public class Murciélago : Enemigo
 {
+    /// <summary>
+    /// Elige una dirección para mover el murciélago.
+    /// </summary>
+    /// <remarks>El murciélago se mueve de forma aleatoria.</remarks>
+    /// <returns>Dirección movimiento.</returns>
     public override Vector2 elegirDirecciónMovimiento()
     {
         return Controlador.obtenerDirecciónAleatoria(this.transform.position, Tamaño, true);
