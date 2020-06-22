@@ -59,6 +59,9 @@ public class Troll : Enemigo
     /// inicio y destino.</returns>
     public List<Vector2> encontrarRutaÓptima(Vector2 inicio, Vector2 destino)
     {
+        return null;
+    }
+        /*
         // Lista de nodos que pueden requerir ser expandidos, ordenados por 
         // prioridad. Estoy usando la coordenada z como identificador.
         List<Vector3> nodosAbiertos = new List<Vector3>();
@@ -114,7 +117,7 @@ public class Troll : Enemigo
                     }
                 }
             }
-            */
+            
             foreach (Vector3 vecino in vecinos)
             {
                 float puntajeGTentativo = puntajeG[(int) actual.z] + 1;
@@ -176,7 +179,7 @@ public class Troll : Enemigo
             Debug.Log(actual);
             Debug.Log(puntajeF(actual));
             Debug.Log(objetivo);
-            */
+            
             
         }
 
@@ -217,7 +220,7 @@ public class Troll : Enemigo
     {
         return (destino - x).magnitude + puntajeG;
     }
-
+    
     public List<Vector3> buscarCasillerosVecinos(List<Vector2> direcciones, List<Vector2> nodosAbiertos, List<Vector2> nodosCerrados, Vector2 actual)
     {
         List<Vector3> vecinos = new List<Vector3>();
@@ -264,7 +267,7 @@ public class Troll : Enemigo
 
         return camino;
     }
-
+    */
     void Start()
     {
         Estados = new List<EstadoEnemigo>();
