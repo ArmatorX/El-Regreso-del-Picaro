@@ -4,210 +4,710 @@ using System.Collections.Generic;
 using UnityEngine;
 /**
  * <summary>
- * Se encarga de coordinar las distintas funcionalidades que deben ocurrir durante una partida.
+ * Coordinar los distintos objetos que intervienen a lo largo de la 
+ * partida, como el movimiento de los enemigos.
  * </summary> 
  * <remarks>
- * Se encarga de mover a los enemigos, ejecutar las acciones del jugador, controlar colisiones, etc.
+ * Se encarga de mover a los enemigos, ejecutar las acciones del 
+ * jugador, controlar colisiones, etc.
  * </remarks>
  */
 public class ControladorJuego : MonoBehaviour {
-    // Constantes
-    // TODO: Armar un archivo de configuración para las rutas de acceso.
-    public static string RUTA_ESTADOS_PERSONAJE = "Datos/EstadoPersonaje.bin";
+    // CONSTANTES
+    //public static string RUTA_ESTADOS_PERSONAJE = "Datos/EstadoPersonaje.bin";
+    private static int CAPA_ENTIDADES = 8;
+
     /**
-     * <summary>
-     * El enum <c>CicloTurno</c> representa el ciclo que reliza el juego cada vez que pasa una ronda completa de turnos (asalto).
-     * </summary>
-     * <remarks>
-     * 
-     * </remarks>
-     */
-    public enum CicloTurno : byte
+    * <summary>
+    * <c>FasesTurno</c> representa los diferentes periodos que pueden
+    * ocurrir a lo largo de un asalto, los cuales afectan el 
+    * comportamiento del <c>ControladorJuego</c>.
+    * </summary>
+    */
+    public enum FasesTurno : byte
     {
         // El ciclo se realiza en el orden que está escrito.
-        INICIALIZACIÓN, // Se realizan las tareas iniciales del juego, como la generación de mapas.
-        CARGA_NIVEL, // Se realiza una vez al comienzo de cada nivel, y se encarga de cargar los datos del nivel actual.
+        // Se realizan las tareas iniciales del juego, como la generación de 
+        // mapas.
+        INICIALIZACIÓN,
         // En este punto inicia el ciclo de turnos.
-        TURNO_PERSONAJE, // El turno del personaje. Espera a que el personaje realice su acción.
-        TURNO_ENEMIGOS, // El turno de los enemigos. Recorre todos los enemigos, y realiza la acción adecuada al comportamiento del mismo.
-        ACTUALIZAR_ESTADOS, // Finalizado el turno de los enemigos, el controlador verifica si es necesario realizar un cambio en los estados de las entidades (vida<0, comida<60, pasaron 5 turnos).
-        EFECTOS_ESTADOS_ALTERADOS, // El controlador aplica los efectos de los estados alterados a las entidades correspondientes.
-        REPOSICIÓN_ENEMIGOS // El controlador agrega enemigos al mapa si están por debajo de cierto nivel.
+        // El turno del personaje. Espera a que el personaje realice su acción.
+        TURNO_PERSONAJE,
+        // Para evitar inconsistencias se espera que terminen las animaciones 
+        // del personaje.
+        ESPERANDO_ANIMACIONES_PERSONAJE,
+        // El turno de los enemigos. Recorre todos los enemigos, y realiza la 
+        // acción adecuada al comportamiento del mismo.
+        TURNO_ENEMIGOS,
+        // Para evitar inconsistencias se espera que terminen las animaciones 
+        // de los enemigos.
+        ESPERANDO_ANIMACIONES_ENEMIGOS,
+        // El controlador aplica los efectos de los estados alterados a las 
+        // entidades correspondientes.
+        // EFECTOS_ESTADOS_ALTERADOS,
+        // El controlador agrega enemigos al mapa si están por debajo de cierto 
+        // nivel.
+        // REPOSICIÓN_ENEMIGOS
     }
 
-    // Atributos
-    /// <value>La pantalla del juego.</value>
+    // ATRIBUTOS
+    /// <value>La instancia actual de la pantalla del juego.</value>
     private PantallaJuego pantalla;
-    /// <value>El nombre del estado "Congelado".</value>
-    private string estadoPersonajeCongelado;
-    /// <value>El nombre del estado "Confundido".</value>
-    private string estadoPersonajeConfundido;
-    /// <value>El nombre del estado "Paralizado".</value>
-    private string estadoPersonajeParalizado;
-    /// <value>Los estados actuales del personaje.</value>
-    private List<string> estadosPersonaje;
     /// <value>La dirección en que se quiere mover el jugador.</value>
-    private Vector3 direcciónMovimiento;
-    /// <value>El personaje que está jugando.</value>
+    //private Vector2 direcciónMovimiento;
+    /// <value>La instancia actual del personaje.</value>
     private Personaje personaje;
-    /// <value>El punto del ciclo en el que se encuentra el controlador.</value>
+    /// <value>La fase en la que se encuentra el controlador.</value>
     /// <remarks>
-    /// Identifica a la acción que se encuentra realizando el controlador en un momento determinado.
-    /// El cicloTurno nos muestra el momento del asalto en que está el ControladorJuego.
+    /// Identifica a la acción que se encuentra realizando el controlador en un 
+    /// momento determinado.
+    /// El cicloTurno nos muestra el momento del asalto en que está el 
+    /// <c>ControladorJuego</c>.
     /// </remarks>
-    private CicloTurno cicloTurno;
-    
+    private FasesTurno faseActual;
+    //private Entidad objetivoActual;
+    /// <value>Instancia de un dado de 20 caras, para realizar las
+    /// distintas tiradas de la partida.</value>
+    private Dado d20;
+    /// <value>Lista de niveles de la partida.</value>
+    private List<GameObject> mapas;
+    /// <value>Número de orden del mapa actual.</value>
+    private int mapaActual;
+    /// <value>Lista de enemigos que quedan con vida en el mapa 
+    /// actual.</value>
+    private List<Enemigo> enemigos;
+    private GameObject escaleraActual;
+    private bool juegoEnPausa;
 
-    // Métodos
-    /*
-    public ControladorJuego(PantallaJuego pantalla)
+    // GETTERS Y SETTERS
+    public PantallaJuego Pantalla { get => pantalla == null ? pantalla = GameObject.Find("PantallaJuego").GetComponent<PantallaJuego>() : pantalla; set => pantalla = value; }
+    //public Vector2 DirecciónMovimiento { get => direcciónMovimiento; set => direcciónMovimiento = value; }
+    public Personaje Personaje { get => personaje == null ? personaje = GameObject.Find("Personaje").GetComponent<Personaje>() : personaje; set => personaje = value; }
+    //public Entidad ObjetivoActual { get => objetivoActual; set => objetivoActual = value; }
+    public Dado D20 { get => d20 == null ? d20 = new Dado(20) : d20 ; set => d20 = value; }
+    public FasesTurno FaseActual { get => faseActual; set => faseActual = value; }
+    public List<Enemigo> Enemigos { get => enemigos; set => enemigos = value; }
+    public List<GameObject> Mapas { get => mapas; set => mapas = value; }
+    public int MapaActual { get => mapaActual; set => mapaActual = value; }
+    public GameObject EscaleraActual { get => escaleraActual == null ? escaleraActual = GameObject.Find("Escalera") : escaleraActual; set => escaleraActual = value; }
+    public bool JuegoEnPausa { get => juegoEnPausa; set => juegoEnPausa = value; }
+
+    // CASOS DE USO
+    /// <summary>
+    /// Se encarga de realizar las acciones relacionadas con el CU001 Mover 
+    /// personaje.
+    /// </summary>
+    /// <param name="dirección">La dirección en que se quiere mover el jugador.
+    /// </param>
+    public void moverPersonaje(Vector2 dirección)
     {
-        this.pantalla = pantalla;
-    }
-    */
-    public PantallaJuego Pantalla { get => pantalla; set => pantalla = value; }
-    public string EstadoPersonajeCongelado { get => estadoPersonajeCongelado; set => estadoPersonajeCongelado = value; }
-    public string EstadoPersonajeConfundido { get => estadoPersonajeConfundido; set => estadoPersonajeConfundido = value; }
-    public string EstadoPersonajeParalizado { get => estadoPersonajeParalizado; set => estadoPersonajeParalizado = value; }
-    public List<string> EstadosPersonaje { get => estadosPersonaje; set => estadosPersonaje = value; }
-    public Vector3 DirecciónMovimiento { get => direcciónMovimiento; set => direcciónMovimiento = value; }
-    // TODO: Hacer que el get verifique si la propiedad es nula.
-    public Personaje Personaje { get => personaje; set => personaje = value; }
-
-    /**
-     * <summary>
-     * Se encarga de realizar las acciones relacionadas con el CU Mover personaje.
-     * </summary>
-     * <param name="dirección">La dirección en que se quiere mover el jugador.</param>
-     */
-    public void moverPersonaje(Vector3 dirección)
-    {
-        // Guardo la dirección del movimiento en la propiedad del controlador.
-        DirecciónMovimiento = dirección;
-
-        // Obtener estado congelado.
-        obtenerEstadoPersonajeCongelado();
-
-        // Obtener los estados en los que se encuentra el personaje.
-        obtenerEstadosPersonaje();
-
-        // Verificar si el personaje está en estado congelado.
-        if (!verificarSiPersonajeEstáEnEstado(EstadoPersonajeCongelado))
+        if (JuegoEnPausa)
         {
-            // Obtener estado confundido.
-            obtenerEstadoPersonajeConfundido();
-
-            // Verificar si el personaje está en estado confundido.
-            if (!verificarSiPersonajeEstáEnEstado(EstadoPersonajeConfundido))
+            Pantalla.moverCursorInventario(dirección);
+        }
+        else
+        {
+            if (FaseActual == FasesTurno.TURNO_PERSONAJE)
             {
-                // Verificar si el camino está obstruido.
-                if (!verificarSiElCaminoEstáObstruido(dirección))
+                FaseActual = FasesTurno.TURNO_ENEMIGOS;
+
+                Vector2 posiciónDestino = (Vector2)Personaje.transform.position + dirección;
+
+                if (!personajeEnEstado(EstadosPersonaje.CONGELADO))
                 {
-                    // Obtener estado paralizado.
-                    obtenerEstadoPersonajeParalizado();
-
-                    // Verificar si el personaje está en estado paralizado.
-                    if (!verificarSiPersonajeEstáEnEstado(EstadoPersonajeParalizado))
+                    if (personajeEnEstado(EstadosPersonaje.CONFUNDIDO))
                     {
-                        // Mover personaje.
-                        Personaje.moverse(dirección);
+                        if (!hayEnemigoEn(posiciónDestino))
+                        {
+                            dirección = obtenerDirecciónAleatoria(Personaje.transform.position, Personaje.Tamaño);
+                        }
+                    }
 
-                        // Actualizar visibilidad del mapa.
-                        //actualizarVisibilidadDelMapa();
+                    if (personajeEnEstado(EstadosPersonaje.PARALIZADO))
+                    {
+                        if (hayObstáculoEn(posiciónDestino))
+                        {
+                            Personaje.consumirComida(Personaje.COMIDA_MOVIMIENTO);
+                            Pantalla.animaciónMovimientoPJFalla(dirección);
+                        }
+                    }
+                    else
+                    {
+                        if (!hayObstáculoEn(posiciónDestino))
+                        {
+                            Personaje.moverse(dirección);
+
+                            //actualizarVisibilidadDelMapa();
+                        }
+                        else
+                        {
+                            Enemigo objetivo = obtenerEnemigoEn(posiciónDestino);
+
+                            if (objetivo != null)
+                            {
+                                try
+                                {
+                                    atacarEnemigoCuerpoACuerpo(objetivo);
+                                }
+                                catch (Exception e)
+                                {
+                                    Pantalla.mostrarExcepcion(e);
+                                }
+                            }
+                            else
+                            {
+                                Pantalla.animaciónMovimientoPJFalla(dirección);
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    Personaje.consumirComida(Personaje.COMIDA_MOVIMIENTO);
+                    Pantalla.animaciónMovimientoPJFalla(dirección);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Se encarga de realizar las acciones relacionadas con el CU002 
+    /// Atacar enemigo cuerpo a cuerpo.
+    /// </summary>
+    /// <param name="objetivo">Objetivo del ataque.</param>
+    public void atacarEnemigoCuerpoACuerpo(Entidad objetivo)
+    {
+        int modificadorAtaque = 0;
+
+        if (!personajeEnEstado(EstadosPersonaje.DÉBIL))
+        {
+            if (personajeEnEstado(EstadosPersonaje.CONFUNDIDO))
+            {
+                if (tirarD20(false, false) <= 4)
+                {
+                    objetivo = Personaje;
+                }
+            }
+
+            Personaje.Desventaja = pjAtacaConDesventajaMelé(objetivo);
+            Personaje.Ventaja = pjAtacaConVentajaMelé(objetivo);
+
+            if (objetivo.esEnemigo())
+            {
+                if (enemigoEnEstado(EstadosEnemigo.VOLANDO, (Enemigo)objetivo))
+                {
+                    modificadorAtaque -= 2;
+                }
+            }
+
+            Personaje.atacarCuerpoACuerpo(objetivo, modificadorAtaque);
+        }
+        else
+        {
+            Pantalla.animaciónAtaqueMeléPersonaje((Enemigo)objetivo, 0, 0);
+        }
+    }
+
+    /// <summary>
+    /// Se encarga de realizar las acciones relacionadas con el CU018 
+    /// Actualizar visibilidad del mapa.
+    /// </summary>
+    /// <remarks>
+    /// No se va a implementar para el final.
+    /// </remarks>
+    public void actualizarVisibilidadDelMapa()
+    {
+        throw new NotImplementedException();
+    }
+
+    /// <summary>
+    /// Se encarga de realizar las acciones relacionadas con el CU017 Subir o 
+    /// bajar escaleras.
+    /// </summary>
+    public void bajarEscaleras()
+    {
+        if (JuegoEnPausa)
+        {
+
+        }
+        else
+        {
+            if (FaseActual == FasesTurno.TURNO_PERSONAJE)
+            {
+                if (personajeEstáEnEscalera())
+                {
+                    Mapas[MapaActual].SetActive(false);
+
+                    if (MapaActual < 3)
+                    {
+                        MapaActual++;
+                        Mapas[MapaActual].SetActive(true);
+                    }
+
+                    Enemigos = new List<Enemigo>();
+
+                    if (MapaActual == 1)
+                    {
+                        Enemigos.Add(GameObject.Find("Murciélago (1)").GetComponent<Murciélago>());
+                        Enemigos.Add(GameObject.Find("Murciélago (2)").GetComponent<Murciélago>());
+                        Enemigos.Add(GameObject.Find("Murciélago (3)").GetComponent<Murciélago>());
+                        Enemigos.Add(GameObject.Find("Murciélago (4)").GetComponent<Murciélago>());
+                        Enemigos.Add(GameObject.Find("Murciélago (5)").GetComponent<Murciélago>());
+                        Enemigos.Add(GameObject.Find("Murciélago (6)").GetComponent<Murciélago>());
+                        Enemigos.Add(GameObject.Find("Murciélago (7)").GetComponent<Murciélago>());
+                        Enemigos.Add(GameObject.Find("Murciélago (8)").GetComponent<Murciélago>());
+                        Enemigos.Add(GameObject.Find("Murciélago (9)").GetComponent<Murciélago>());
+                        Enemigos.Add(GameObject.Find("Murciélago (10)").GetComponent<Murciélago>());
+                        Enemigos.Add(GameObject.Find("Murciélago (11)").GetComponent<Murciélago>());
+                        Enemigos.Add(GameObject.Find("Serpiente (1)").GetComponent<Serpiente>());
+                        Enemigos.Add(GameObject.Find("Serpiente (2)").GetComponent<Serpiente>());
+                        Enemigos.Add(GameObject.Find("Serpiente (3)").GetComponent<Serpiente>());
+                        Enemigos.Add(GameObject.Find("Serpiente (4)").GetComponent<Serpiente>());
+                        Enemigos.Add(GameObject.Find("Serpiente (5)").GetComponent<Serpiente>());
+                        Enemigos.Add(GameObject.Find("Serpiente (6)").GetComponent<Serpiente>());
+                        Enemigos.Add(GameObject.Find("Serpiente (7)").GetComponent<Serpiente>());
+                        Enemigos.Add(GameObject.Find("Serpiente (8)").GetComponent<Serpiente>());
+                        Enemigos.Add(GameObject.Find("Serpiente (9)").GetComponent<Serpiente>());
+                        Enemigos.Add(GameObject.Find("Serpiente (10)").GetComponent<Serpiente>());
+                        Enemigos.Add(GameObject.Find("Serpiente (11)").GetComponent<Serpiente>());
+                        Enemigos.Add(GameObject.Find("Serpiente (12)").GetComponent<Serpiente>());
+
+                        EscaleraActual = GameObject.Find("Escalera");
+                    }
+                    else if (MapaActual == 2)
+                    {
+                        Enemigos.Add(GameObject.Find("Murciélago (1)").GetComponent<Murciélago>());
+                        Enemigos.Add(GameObject.Find("Murciélago (2)").GetComponent<Murciélago>());
+                        Enemigos.Add(GameObject.Find("Murciélago (3)").GetComponent<Murciélago>());
+                        Enemigos.Add(GameObject.Find("Murciélago (4)").GetComponent<Murciélago>());
+                        Enemigos.Add(GameObject.Find("Murciélago (5)").GetComponent<Murciélago>());
+                        Enemigos.Add(GameObject.Find("Murciélago (6)").GetComponent<Murciélago>());
+                        Enemigos.Add(GameObject.Find("Troll").GetComponent<Troll>());
+
+                        //EscaleraActual = GameObject.Find("Escalera");
                     }
                 }
             }
         }
     }
 
-    public void actualizarVisibilidadDelMapa()
+    /// <summary>
+    /// Se encarga de realizar las acciones relacionadas con el CU092 Mostrar 
+    /// inventario personaje.
+    /// </summary>
+    public void mostrarInventario()
+    {
+        if (!JuegoEnPausa)
+        {
+            JuegoEnPausa = true;
+
+            // Objetos del inventario.
+            ObjetoAgarrable[] objetos = new ObjetoAgarrable[0];
+
+            // Cantidad de cada objeto en el inventario.
+            int[] cantidades = new int[0];
+            bool[] estáEquipado = new bool[0];
+
+            obtenerObjetosInventario(ref objetos, ref estáEquipado, ref cantidades);
+
+            Pantalla.mostrarObjetosInventario(objetos, estáEquipado, cantidades);
+        } else
+        {
+            JuegoEnPausa = false;
+
+            Pantalla.ocultarInventario();
+        }
+    }
+
+    // MÉTODOS
+    /*
+    /// <summary>
+    /// Elimina el maniquí creado para evitar que los enemigos se muevan al 
+    /// mismo casillero, cuando termina la animación.
+    /// </summary>
+    /// <param name="enemigo">Enemigo cuya animación terminó.</param>
+    public void eliminarManiquí(Entidad entidad)
+    {
+        entidad.eliminarManiquí();
+    }
+    */
+
+    /// <summary>
+    /// Busca los objetos del inventario del personaje.
+    /// </summary>
+    private void obtenerObjetosInventario(ref ObjetoAgarrable[] objetos, ref bool[] estáEquipado, ref int[] cantidades)
+    {
+        int cantidadObjetos = Personaje.Inventario.Detalle.Count;
+        objetos = new ObjetoAgarrable[cantidadObjetos];
+        cantidades = new int[cantidadObjetos];
+        estáEquipado = new bool[cantidadObjetos];
+
+        for (int i = 0; i < cantidadObjetos; i++)
+        {
+            objetos[i] = Personaje.Inventario.Detalle[i].ObjetoAgarrable;
+            estáEquipado[i] = Personaje.EquipoActual.esObjetoEquipado(objetos[i]);
+            cantidades[i] = Personaje.Inventario.Detalle[i].Cantidad;
+        }
+    }
+
+    /// <summary>
+    /// Verifica si el personaje tiene desventaja para atacar a melé.
+    /// </summary>
+    /// <param name="objetivo">Objetivo del ataque.</param>
+    /// <returns>Verdadero si el personaje ataca con desventaja.</returns>
+    private bool pjAtacaConDesventajaMelé(Entidad objetivo)
+    {
+        bool desventaja = false;
+        
+        if (personajeEnEstado(EstadosPersonaje.HAMBRIENTO))
+        {
+            desventaja = true;
+        }
+
+        if (objetivo.esEnemigo())
+        {
+            if (personajeEnEstado(EstadosPersonaje.CEGADO))
+            {
+                desventaja = true;
+            }
+
+            if (enemigoEnEstado(EstadosEnemigo.INVISIBLE, (Enemigo) objetivo))
+            {
+                desventaja = true;
+            }
+        }
+
+        return desventaja;
+    }
+    
+    /// <summary>
+    /// Verifica si el personaje tiene ventaja para atacar a melé.
+    /// </summary>
+    /// <param name="objetivo">Objetivo del ataque.</param>
+    /// <returns>Verdadero si el personaje ataca con desventaja.</returns>
+    private bool pjAtacaConVentajaMelé(Entidad objetivo)
+    {
+        bool ventaja = false;
+
+        if (objetivo.esEnemigo())
+        {
+            if (!personajeEnEstado(EstadosPersonaje.INVISIBLE))
+            {
+                ventaja = true;
+            }
+        }
+
+        return ventaja;
+    }
+
+    /*
+    /// <summary>
+    /// El personaje se ataca a sí mismo.
+    /// </summary>
+    private void autoatacarPersonaje()
     {
         throw new NotImplementedException();
     }
+    */
 
-    /**
-     * <summary>
-     * Obtiene el nombre del estado "Congelado" y lo guarda en una propiedad del controlador.
-     * </summary>
-     */
-    public void obtenerEstadoPersonajeCongelado()
+    /// <summary>
+    /// Verifica si un enemigo está en un estado determinado.
+    /// </summary>
+    /// <param name="estado">Estado a controlar.</param>
+    /// <param name="enemigo">Enemigo que se quiere verificar.</param>
+    /// <returns>Verdadero si está en el estado.</returns>
+    public bool enemigoEnEstado(EstadosEnemigo estado, Enemigo enemigo)
     {
-        if (EstadoPersonajeCongelado == null)
-        {
-            // Busco en los archivos locales todos los estados del personaje.
-            List<EstadoPersonaje> todosLosEstados = Persistencia.ReadFromBinaryFile<List<EstadoPersonaje>>(RUTA_ESTADOS_PERSONAJE);
-
-            // Recorro todos los estados hasta encontrar el estado "Congelado".
-            foreach (EstadoPersonaje estado in todosLosEstados)
-            {
-                if (estado.esEstadoCongelado())
-                {
-                    // Obtengo y guardo el nombre del estado.
-                    EstadoPersonajeCongelado = estado.Nombre;
-                    break;
-                }
-            }
-        }
-    }
-    
-    /**
-     * <summary>
-     * Obtiene el nombre del estado "Confundido" y lo guarda en una propiedad del controlador.
-     * </summary>
-     */
-    public void obtenerEstadoPersonajeConfundido()
-    {
-        if (EstadoPersonajeConfundido == null)
-        {
-            // Busco en los archivos locales todos los estados del personaje.
-            List<EstadoPersonaje> todosLosEstados = Persistencia.ReadFromBinaryFile<List<EstadoPersonaje>>(RUTA_ESTADOS_PERSONAJE);
-
-            // Recorro todos los estados hasta encontrar el estado "Confundido".
-            foreach (EstadoPersonaje estado in todosLosEstados)
-            {
-                if (estado.esEstadoConfundido())
-                {
-                    // Obtengo y guardo el nombre del estado.
-                    EstadoPersonajeConfundido = estado.Nombre;
-                    break;
-                }
-            }
-        }
+        return enemigo.estáEnEstado(estado);
     }
 
-    /**
-     * <summary>
-     * Obtiene el nombre del estado "Paralizado" y lo guarda en una propiedad del controlador.
-     * </summary>
-     */
-    public void obtenerEstadoPersonajeParalizado()
+    /// <summary>
+    /// Verifica si hay un enemigo o un maniquí enemigo en la posición 
+    /// <c>posición</c>.
+    /// </summary>
+    /// <param name="posición">Posición a controlar.</param>
+    /// <returns>Verdadero si hay un enemigo en <c>posición</c></returns>
+    public bool hayEnemigoEn(Vector2 posición)
     {
-        if (EstadoPersonajeParalizado == null)
-        {
-            // Busco en los archivos locales todos los estados del personaje.
-            List<EstadoPersonaje> todosLosEstados = Persistencia.ReadFromBinaryFile<List<EstadoPersonaje>>(RUTA_ESTADOS_PERSONAJE);
+        Vector2 p1 = posición - new Vector2(0.25f, 0.25f);
+        Vector2 p2 = posición + new Vector2(0.25f, 0.25f);
+        Collider2D collider = Physics2D.OverlapArea(p1, p2);
 
-            // Recorro todos los estados hasta encontrar el estado "Paralizado".
-            foreach (EstadoPersonaje estado in todosLosEstados)
-            {
-                if (estado.esEstadoParalizado())
-                {
-                    // Obtengo y guardo el nombre del estado.
-                    EstadoPersonajeParalizado = estado.Nombre;
-                    break;
-                }
-            }
+        if (collider != null && collider.tag == "Enemigo")
+        {
+            return true;
         }
+
+        return false;
     }
 
-    /**
-     * <summary>
-     * Obtiene los nombres de los estados actuales del personaje y los guarda en una propiedad.
-     * </summary>
-     */
-    public void obtenerEstadosPersonaje()
+    /// <summary>
+    /// Verifica si el personaje o su maniquí está en la posición <c>posición</c>.
+    /// </summary>
+    /// <param name="posición">Posición a controlar.</param>
+    /// <returns>Verdadero si hay el personaje está en <c>posición</c>.</returns>
+    public bool hayPersonajeEn(Vector2 posición)
     {
-        EstadosPersonaje = Personaje.obtenerEstados();
+        Vector2 p1 = posición - new Vector2(0.25f, 0.25f);
+        Vector2 p2 = posición + new Vector2(0.25f, 0.25f);
+        Collider2D collider = Physics2D.OverlapArea(p1, p2);
+
+        if (collider != null && collider.tag == "Player")
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Verifica si hay una entidad en la posición <c>posición</c>.
+    /// </summary>
+    /// <param name="posición">Posición a controlar.</param>
+    /// <returns>Verdadero si hay una entidad en a posición.</returns>
+    public bool hayEntidadEn(Vector2 posición)
+    {
+        return hayEnemigoEn(posición) || hayPersonajeEn(posición);
+    }
+
+    /// <summary>
+    /// Verifica si hay un obstáculo (un objeto sólido) en <c>posición</c>.
+    /// </summary>
+    /// <param name="posición">La posición (x, y, z) a controlar.</param>
+    /// <returns>Verdadero si hay un obstáculo.</returns>
+    public bool hayObstáculoEn(Vector2 posición)
+    {
+        Vector2 p1 = posición - new Vector2(0.25f, 0.25f);
+        Vector2 p2 = posición + new Vector2(0.25f, 0.25f);
+        Collider2D collider = Physics2D.OverlapArea(p1, p2);
+
+        if (collider == null || collider.tag == "Escalera")
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Obtiene el enemigo que se encuentra en la <c>posición</c>.
+    /// </summary>
+    /// <param name="posición">Posición del enemigo.</param>
+    public Enemigo obtenerEnemigoEn(Vector2 posición)
+    {
+        Vector2 p1 = posición - new Vector2(0.25f, 0.25f);
+        Vector2 p2 = posición + new Vector2(0.25f, 0.25f);
+        Collider2D collider = Physics2D.OverlapArea(p1, p2);
+
+        if (collider != null && collider.tag == "Enemigo")
+        {
+            return collider.gameObject.GetComponent<Enemigo>();
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Obtiene una dirección válida de movimiento en función de un 
+    /// número. Se usa para recorrer las posibles direcciones.
+    /// </summary>
+    /// <param name="dirección">Entero que representa una dirección.</param>
+    /// <returns>Vector con la dirección correspondiente.</returns>
+    public Vector2 obtenerDirección(int dirección, TamañoEntidad tamaño = TamañoEntidad.NORMAL)
+    {
+        switch(tamaño)
+        {
+            case TamañoEntidad.NORMAL:
+                switch (dirección)
+                {
+                    case 0:
+                        return Vector2.up;
+                    case 1:
+                        return Vector2.left;
+                    case 2:
+                        return Vector2.down;
+                    case 3:
+                        return Vector2.right;
+                    default:
+                        return Vector2.zero;
+                }
+            case TamañoEntidad.GRANDE:
+                switch (dirección)
+                {
+                    case 0:
+                        return new Vector2(-0.5f, 1.5f);
+                    case 1:
+                        return new Vector2(-1.5f, 0.5f);
+                    case 2:
+                        return new Vector2(-1.5f, -0.5f);
+                    case 3:
+                        return new Vector2(-0.5f, -1.5f);
+                    case 4:
+                        return new Vector2(0.5f, -1.5f);
+                    case 5:
+                        return new Vector2(1.5f, -0.5f);
+                    case 6:
+                        return new Vector2(1.5f, 0.5f);
+                    case 7:
+                        return new Vector2(0.5f, 1.5f);
+                    default:
+                        return Vector2.zero;
+                }
+            case TamañoEntidad.GIGANTE:
+                switch (dirección)
+                {
+                    case 0:
+                        return new Vector2(0f, 2f);
+                    case 1:
+                        return new Vector2(-1f, 2f);
+                    case 2:
+                        return new Vector2(-2f, 1f);
+                    case 3:
+                        return new Vector2(-2f, 0f);
+                    case 4:
+                        return new Vector2(-2f, -1f);
+                    case 5:
+                        return new Vector2(-1f, -2f);
+                    case 6:
+                        return new Vector2(0f, -2f);
+                    case 7:
+                        return new Vector2(1f, -2f);
+                    case 8:
+                        return new Vector2(2f, -1f);
+                    case 9:
+                        return new Vector2(2f, 0f);
+                    case 10:
+                        return new Vector2(2f, 1f);
+                    case 11:
+                        return new Vector2(1f, 2f);
+                    default:
+                        return Vector2.zero;
+                }
+        }
+
+        return Vector2.zero;
+    }
+
+    /// <summary>
+    /// Devuelve una dirección de movimiento aleatoria, que no esté 
+    /// obstruida por un enemigo o por el personaje.
+    /// </summary>
+    /// <param name="posiciónInicio">Posición desde la que se 
+    /// realiza el control.</param>
+    /// <param name="controlarParedes">Si se pone en true, 
+    /// también se controla la colisión con las paredes.</param>
+    /// <returns>Dirección aleatoria libre.</returns>
+    public Vector2 obtenerDirecciónAleatoria(Vector2 posiciónInicio, TamañoEntidad tamaño, bool controlarParedes = false)
+    {
+        List<Vector2> direcciones = obtenerDireccionesVálidas(posiciónInicio, tamaño, controlarParedes);
+
+        return direcciones[UnityEngine.Random.Range(0, direcciones.Count)];
+    }
+
+    /// <summary>
+    /// Verifica todas las direcciones válidas desde una posición, a partir del
+    /// tamaño de una entidad.
+    /// </summary>
+    /// <param name="posiciónInicio">Posición desde la cual se controla.</param>
+    /// <param name="tamaño">Tamaño de la entidad.</param>
+    /// <param name="controlarParedes">Si se controlan también las paredes.</param>
+    /// <returns>Lista de direcciones válidas de movimiento.</returns>
+    public List<Vector2> obtenerDireccionesVálidas(Vector2 posiciónInicio, TamañoEntidad tamaño, bool controlarParedes = false)
+    {
+        List<Vector2> direcciones = new List<Vector2>();
+        List<Vector2> posiciones = new List<Vector2>();
+
+        for (int i = 0; i < 4; i++)
+        {
+            posiciones.Clear();
+
+            switch (tamaño)
+            {
+                case TamañoEntidad.NORMAL:
+                    Vector2 p = posiciónInicio + obtenerDirección(i);
+                    posiciones.Add(p);
+                    break;
+                case TamañoEntidad.GRANDE:
+                    Vector2 p1 = posiciónInicio + obtenerDirección(i) * 1.5f + new Vector2(obtenerDirección(i).y, obtenerDirección(i).x) * 0.5f;
+                    posiciones.Add(p1);
+                    Vector2 p2 = posiciónInicio + obtenerDirección(i) * 1.5f - new Vector2(obtenerDirección(i).y, obtenerDirección(i).x) * 0.5f;
+                    posiciones.Add(p2);
+                    break;
+                case TamañoEntidad.GIGANTE:
+                    Vector2 p01 = posiciónInicio + obtenerDirección(i) * 2f;
+                    posiciones.Add(p01);
+                    Vector2 p02 = posiciónInicio + obtenerDirección(i) * 2f + new Vector2(obtenerDirección(i).y, obtenerDirección(i).x);
+                    posiciones.Add(p02);
+                    Vector2 p03 = posiciónInicio + obtenerDirección(i) * 2f - new Vector2(obtenerDirección(i).y, obtenerDirección(i).x);
+                    posiciones.Add(p03);
+                    break;
+            }
+
+            bool direcciónVálida = true;
+
+            foreach (Vector2 posición in posiciones)
+            {
+                if (!controlarParedes)
+                {
+                    if (hayEntidadEn(posición))
+                    {
+                        direcciónVálida = false;
+                        break;
+                    }
+                }
+                else
+                {
+                    if (hayObstáculoEn(posición))
+                    {
+                        direcciónVálida = false;
+                        break;
+                    }
+                }
+            }
+
+            if (direcciónVálida)
+            {
+                direcciones.Add(obtenerDirección(i));
+            }
+        }
+
+        return direcciones;
+    }
+
+    /// <summary>
+    /// Realiza una tirada del dado de 20 caras, permitiendo tirar 
+    /// con ventaja y desventaja.
+    /// </summary>
+    /// <param name="conVentaja">Indica si la tirada tiene ventaja.</param>
+    /// <param name="conDesventaja">Indica si la tirada tiene desventaja.</param>
+    /// <returns>El resultado de la tirada.</returns>
+    public int tirarD20(bool conVentaja, bool conDesventaja)
+    {
+        int tirada = D20.tirarDados(1);
+        int aux = D20.tirarDados(1);
+        
+        if (conVentaja != conDesventaja)
+        {
+            if ((conVentaja && aux > tirada) || (conDesventaja && aux < tirada))
+            {
+                tirada = aux;
+            }
+        }
+
+        return tirada;
+    }
+
+    /// <summary>
+    /// Ejecuta un ataque físico. Verifica si el impacto supera la defensa del 
+    /// objetivo y en caso de que sea así, aplica el daño correspondiente.
+    /// </summary>
+    /// <param name="objetivo">Objetivo del ataque.</param>
+    /// <param name="impacto">Impacto del ataque.</param>
+    /// <param name="daño">Daño que recibe el objetivo en un ataque exitoso.</param>
+    /// <returns>Verdadero si el ataque impacta.</returns>
+    public bool realizarAtaque(Entidad objetivo, int impacto, int daño)
+    {
+        return objetivo.recibirAtaque(impacto, daño);
     }
 
     /**
@@ -215,77 +715,207 @@ public class ControladorJuego : MonoBehaviour {
      * Verifica si el personaje está en el estado <c>nombreEstado</c>.
      * </summary>
      * <param name="nombreEstado">El nombre del estado a controlar.</param>
-     * <returns>Verdadero si <c>nombreEstado</c> está entre los estados del personaje.</returns>
+     * <returns>Verdadero si <c>nombreEstado</c> está entre los 
+     * estados del personaje.</returns>
      */
-    public bool verificarSiPersonajeEstáEnEstado(string nombreEstado)
+    public bool personajeEnEstado(EstadosPersonaje estado)
     {
-        return EstadosPersonaje.Contains(nombreEstado);
+        return Personaje.estáEnEstado(estado);
     }
 
-    /**
-     * <summary>
-     * Verifica si hay algo en la dirección en que se quiere mover el personaje que pueda obstruir el movimiento.
-     * </summary>
-     * <param name="dirección">Dirección del movimiento.</param>
-     * <returns>Falso si el camino está libre.</returns>
-     */
-    public bool verificarSiElCaminoEstáObstruido(Vector3 dirección)
+    /// <summary>
+    /// Verifica si el enemigo está adyacente al personaje.
+    /// </summary>
+    /// <param name="posición">Posición desde el cual se hace el control.</param>
+    /// <returns>Verdadero si está adyacente.</returns>
+    public bool estáAdyacenteAlPersonaje(Vector2 posición, TamañoEntidad tamaño)
     {
-        RaycastHit2D hit = Physics2D.Raycast(Personaje.transform.position, dirección);
-        if (hit.collider == null)
+        int cantidadDirecciones = 0;
+
+        switch (tamaño)
         {
-            return false;
+            case TamañoEntidad.NORMAL:
+                cantidadDirecciones = 4;
+                break;
+            case TamañoEntidad.GRANDE:
+                cantidadDirecciones = 8;
+                break;
+            case TamañoEntidad.GIGANTE:
+                cantidadDirecciones = 12;
+                break;
         }
-        return true;
+
+        for (int i = 0; i < cantidadDirecciones; i++)
+        {
+            if (hayPersonajeEn(posición + obtenerDirección(i, tamaño)))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+    
+    /// <summary>
+    /// Controla si el personaje está posicionado sobre la escalera del nivel 
+    /// actual.
+    /// </summary>
+    /// <returns>Verdadero si está en la escalera.</returns>
+    public bool personajeEstáEnEscalera()
+    {
+        Vector2 posiciónEscaleraFixed = EscaleraActual.transform.position;
+
+        if ((posiciónEscaleraFixed - Personaje.RB.position).magnitude == 0)
+        {
+            return true;
+        }
+
+        return false;
+        
+        /*
+        Vector2 p1 = Personaje.RB.position - new Vector2(0.25f, 0.25f);
+        Vector2 p2 = Personaje.RB.position + new Vector2(0.25f, 0.25f);
+        Collider2D collider = Physics2D.OverlapArea(p1, p2, 10);
+
+        if (collider != null && collider.tag == "Escalera")
+        {
+            return true;
+        }
+
+        return false;
+        */
     }
 
+    // ANIMACIONES
+    /// <summary>
+    /// Muestra la animación de movimiento del personaje.
+    /// </summary>
+    /// <param name="dirección">Dirección del movimiento.</param>
+    public void animaciónMovimientoPersonaje(Vector2 dirección)
+    {
+        Pantalla.animaciónMovimientoPersonaje(dirección);
+    }
+
+    /// <summary>
+    /// Muestra la animación del movimiento de un enemigo.
+    /// </summary>
+    /// <param name="enemigo">Enemigo que se quiere mover.</param>
+    /// <param name="dirección">Dirección del movimiento.</param>
+    public void animaciónMovimientoEnemigo(Enemigo enemigo, Vector2 dirección)
+    {
+        Pantalla.animaciónMovimientoEnemigo(enemigo, dirección);
+    }
+
+    /// <summary>
+    /// Muestra la animación del ataque melé básico de un enemigo. 
+    /// </summary>
+    /// <remarks>
+    /// No todos los enemigos tienen un ataque melé, pero la gran mayoría sí.
+    /// Tipos de animación:
+    /// 0 - El ataque falla.
+    /// 1 - El ataque impacta. Animación por defecto.
+    /// 2 - El ataque es crítico.
+    /// </remarks>
+    /// <param name="enemigo">Enemigo que realiza el ataque.</param>
+    /// <param name="daño">Daño realizado al personaje.</param>
+    /// <param name="tipo">Tipo de animación.</param>
+    public void animaciónAtaqueMeléEnemigo(Enemigo enemigo, int daño, byte tipo = 1)
+    {
+        Pantalla.animaciónAtaqueMeléEnemigo(enemigo, daño, tipo);
+    }
+
+    /// <summary>
+    /// Muestra la animación del ataque melé del personaje.
+    /// </summary>
+    /// <remarks>
+    /// Tipos de animación:
+    /// 0 - El ataque falla.
+    /// 1 - El ataque impacta. Animación por defecto.
+    /// 2 - El ataque es crítico.
+    /// </remarks>
+    /// <param name="objetivo">Objetivo del ataque.</param>
+    /// <param name="dañoRealizado">Puntos de daño realizado.</param>
+    /// <param name="tipo">Tipos de animación.</param>
+    public void animaciónAtaqueMeléPersonaje(Entidad objetivo, int dañoRealizado, byte tipo = 1)
+    {
+        Pantalla.animaciónAtaqueMeléPersonaje(objetivo, dañoRealizado, tipo);
+    }
+
+    // MÉTODOS DE UNITY
     public void Start()
     {
-        // Inicializo la pantalla
-        pantalla = GameObject.Find("PantallaJuego").GetComponent<PantallaJuego>();
-        personaje = GameObject.Find("Personaje").GetComponent<Personaje>();
+        // Inicializo cicloTurno en el turno del personaje
+        FaseActual = FasesTurno.TURNO_PERSONAJE;
+
+        Mapas = new List<GameObject>();
+        Mapas.Add(GameObject.Find("Nivel 1"));
+        Mapas.Add(GameObject.Find("Nivel 2"));
+        Mapas.Add(GameObject.Find("Nivel 3"));
+
+        MapaActual = 0;
+        Mapas[1].SetActive(false);
+        Mapas[2].SetActive(false);
+
+        // Creo los enemigos
+        Enemigos = new List<Enemigo>();
+        Enemigos.Add(GameObject.Find("Murciélago (1)").GetComponent<Murciélago>());
+        Enemigos.Add(GameObject.Find("Murciélago (2)").GetComponent<Murciélago>());
+        Enemigos.Add(GameObject.Find("Murciélago (3)").GetComponent<Murciélago>());
+        Enemigos.Add(GameObject.Find("Murciélago (4)").GetComponent<Murciélago>());
+        Enemigos.Add(GameObject.Find("Murciélago (5)").GetComponent<Murciélago>());
+        Enemigos.Add(GameObject.Find("Murciélago (6)").GetComponent<Murciélago>());
+        Enemigos.Add(GameObject.Find("Serpiente (1)").GetComponent<Serpiente>());
+        Enemigos.Add(GameObject.Find("Serpiente (2)").GetComponent<Serpiente>());
+        Enemigos.Add(GameObject.Find("Serpiente (3)").GetComponent<Serpiente>());
+        Enemigos.Add(GameObject.Find("Serpiente (4)").GetComponent<Serpiente>());
+        Enemigos.Add(GameObject.Find("Serpiente (5)").GetComponent<Serpiente>());
+        Enemigos.Add(GameObject.Find("Serpiente (6)").GetComponent<Serpiente>());
+        Enemigos.Add(GameObject.Find("Serpiente (7)").GetComponent<Serpiente>());
+        Enemigos.Add(GameObject.Find("Troll").GetComponent<Troll>());
+
+        D20 = new Dado(20);
+
+        JuegoEnPausa = false;
     }
 
-    /*
-    void Start()
+    // Update is called once per frame
+    void FixedUpdate()
     {
-        Persistencia.CrearArchivoConTodosLosEstados();        
-    }
-    /*
-    // Use this for initialization
-    void Start () {
-        // Inicializo cicloTurno en el turno del personaje.
-        cicloTurno = CicloTurno.TURNO_PERSONAJE;
-	}
-	
-	// Update is called once per frame
-	void FixedUpdate () {
-		switch (cicloTurno)
+        switch (FaseActual)
         {
-            case CicloTurno.INICIALIZACIÓN:
+            //case FasesTurno.INICIALIZACIÓN:
+
+            //    break;
+            //case FasesTurno.TURNO_PERSONAJE:
+
+            //    break;
+            //case FasesTurno.ESPERANDO_ANIMACIONES_PERSONAJE:
+            //    if (!Pantalla.AnimaciónEnProgreso)
+            //    {
+            //        FaseActual = FasesTurno.TURNO_ENEMIGOS;
+            //    }
+
+            //    break;
+            case FasesTurno.TURNO_ENEMIGOS:
+                Enemigos.ForEach((enemigo) => enemigo.usarTurno(0));
+
+                FaseActual = FasesTurno.TURNO_PERSONAJE;
 
                 break;
-            case CicloTurno.CARGA_NIVEL:
 
-                break;
-            case CicloTurno.TURNO_PERSONAJE:
-                // TURNO DEL PERSONAJE
-                // Se espera que el personaje realice una acción.
+            //case FasesTurno.ESPERANDO_ANIMACIONES_ENEMIGOS:
+            //    if (!Pantalla.AnimaciónEnProgreso)
+            //    {
+            //        FaseActual = FasesTurno.TURNO_PERSONAJE;
+            //    }
 
-                break;
-            case CicloTurno.TURNO_ENEMIGOS:
+            //    break;
+                //case FasesTurno.EFECTOS_ESTADOS_ALTERADOS:
 
-                break;
-            case CicloTurno.ACTUALIZAR_ESTADOS:
+                //    break;
+                //case FasesTurno.REPOSICIÓN_ENEMIGOS:
 
-                break;
-            case CicloTurno.EFECTOS_ESTADOS_ALTERADOS:
-
-                break;
-            case CicloTurno.REPOSICIÓN_ENEMIGOS:
-
-                break;
+                //    break;
         }
-	}
-    */
+    }
 }
