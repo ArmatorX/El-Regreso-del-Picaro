@@ -288,6 +288,8 @@ public class PantallaJuego : MonoBehaviour
             yield return null;
         }
 
+        yield return null;
+
         Personaje.Animaciones.SetInteger("estado", 0);
 
         //Controlador.eliminarManiquí(Personaje);
@@ -341,6 +343,8 @@ public class PantallaJuego : MonoBehaviour
     /// <returns>Corrutina de movimiento.</returns>
     public IEnumerator movimientoSuavizadoEnemigo(Vector2 destino, Enemigo enemigo)
     {
+        enemigo.SeEstáMoviendo = true;
+
         orientarSpriteEntidad(enemigo, destino - enemigo.RB.position);
 
         for (int i = 1; (destino - enemigo.RB.position).magnitude > Mathf.Epsilon; i++)
@@ -352,6 +356,9 @@ public class PantallaJuego : MonoBehaviour
             yield return null;
         }
 
+        yield return null;
+
+        enemigo.SeEstáMoviendo = false;
         //Controlador.eliminarManiquí(enemigo);
     }
 
@@ -480,7 +487,7 @@ public class PantallaJuego : MonoBehaviour
 
     void Update()
     {
-        if (!AnimaciónEnProgreso)
+        if (Personaje.Animaciones.GetInteger("estado") == 0)
         {
             if (Input.anyKeyDown)
             {

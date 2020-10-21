@@ -27,9 +27,10 @@ public abstract class Entidad : MonoBehaviour
     /// <value>Determina el tamaño que ocupa una entidad.</value>
     private TamañoEntidad tamaño;
     /// <value>Es un objeto falso que determina la hitbox de la entidad.
-    /// El movimiento de los maniquíes es síncrono, de forma que las animaciones 
+    /// El movimiento de las hitbox es síncrono, de forma que las animaciones 
     /// se pueden hacer de forma asíncrona sin afectar el juego.</value>
-    private GameObject maniquí;
+    private GameObject hitbox;
+    private bool seEstáMoviendo;
 
     public Piso Ubicación { get => ubicación; set => ubicación = value; }
     public int VidaActual { get => vidaActual; set => vidaActual = value; }
@@ -65,7 +66,8 @@ public abstract class Entidad : MonoBehaviour
         }
     }
     public TamañoEntidad Tamaño { get => tamaño; set => tamaño = value; }
-    public GameObject Maniquí { get => maniquí; set => maniquí = value; }
+    public GameObject Hitbox { get => hitbox; set => hitbox = value; }
+    public bool SeEstáMoviendo { get => seEstáMoviendo; set => seEstáMoviendo = value; }
 
     // TODO: ataqueMelé quiero que sea un byte, pero esto es más rápido. Por el tema de que magia va a usar el mismo.
     /// <summary>
@@ -165,6 +167,16 @@ public abstract class Entidad : MonoBehaviour
         }
 
         return daño;
+    }
+
+    /// <summary>
+    /// Mueve la hitbox en la dirección indicada.
+    /// </summary>
+    /// <param name="dirección">Dirección de movimiento.</param>
+    public void moverHitbox(Vector2 dirección)
+    {
+        // TODO: Esto no está testeado.
+        Hitbox.transform.position += (Vector3) dirección;
     }
 
     /*
