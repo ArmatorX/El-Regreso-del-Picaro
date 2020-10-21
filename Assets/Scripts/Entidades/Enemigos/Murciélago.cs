@@ -18,8 +18,10 @@ public class Murciélago : Enemigo
     // Start is called before the first frame update
     void Start()
     {
-        Estados = new List<EstadoEnemigo>();
-        Estados.Add(new EstadoEnemigo(EstadosEnemigo.VOLANDO));
+        Estados = new List<EstadoEnemigo>
+        {
+            new EstadoEnemigo(EstadosEnemigo.VOLANDO)
+        };
 
         Tamaño = TamañoEntidad.NORMAL;
         VidaMáxima = 10;
@@ -30,11 +32,12 @@ public class Murciélago : Enemigo
         Magia = 0;
         DadoDañoAtaqueBase = new Dado(4);
         CantidadDadosDañoAtaqueBase = 1;
+        SeEstáMoviendo = false;
 
         Ventaja = false;
         Desventaja = false;
 
-        crearManiquí();
+        //crearManiquí();
     }
 
     // Update is called once per frame
@@ -42,8 +45,9 @@ public class Murciélago : Enemigo
     {
         if (Estados[0].Nombre == EstadosEnemigo.MUERTO)
         {
-            Destroy(gameObject);
             Controlador.Enemigos.Remove(this);
+            Destroy(this.Hitbox);
+            Destroy(gameObject);
         }
     }
 }

@@ -17,14 +17,14 @@ namespace Tests
             GameObject enemigoGO = new GameObject();
             enemigo = enemigoGO.AddComponent<EnemigoPruebas>();
             enemigo.transform.position = Vector3.zero;
-
+            /*
             enemigo.Maniquí = new GameObject("Maniquí");
             enemigo.Maniquí.tag = "Enemigo";
             enemigo.Maniquí.transform.localScale = new Vector3(6.25f, 6.25f, 1);
             enemigo.Maniquí.transform.position = enemigo.transform.position;
             BoxCollider2D hitbox = enemigo.Maniquí.AddComponent<BoxCollider2D>();
             hitbox.size = new Vector2(0.16f, 0.16f);
-
+            */
             enemigo.Fuerza = 11;
             enemigo.Destreza = 14;
             enemigo.Magia = 15;
@@ -33,7 +33,7 @@ namespace Tests
             enemigo.CantidadDadosDañoAtaqueBase = 2;
 
             enemigo.RB = enemigoGO.AddComponent<Rigidbody2D>();
-            enemigo.crearManiquí();
+            //enemigo.crearManiquí();
 
             enemigo.VidaMáxima = 20;
             enemigo.VidaActual = enemigo.VidaMáxima;
@@ -143,7 +143,7 @@ namespace Tests
         {
             Assert.GreaterOrEqual(enemigo.calcularDañoBase(), 0);
         }
-
+        /*
         [Test]
         public void Enemigo_crearManiquí_CreaObjetoDelTipoGameObject()
         {
@@ -223,7 +223,7 @@ namespace Tests
 
             Assert.AreEqual(valorEsperado, valorReal);
         }
-
+        */
         [Test]
         public void Enemigo_estoyAdyacenteAlPersonaje_LlamaMétodoControlador()
         {

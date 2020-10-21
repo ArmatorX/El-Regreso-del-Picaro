@@ -40,11 +40,12 @@ public class Serpiente : Enemigo
         Magia = 0;
         DadoDañoAtaqueBase = new Dado(4);
         CantidadDadosDañoAtaqueBase = 1;
+        SeEstáMoviendo = false;
 
         Ventaja = false;
         Desventaja = false;
 
-        crearManiquí();
+        //crearManiquí();
     }
 
     // Update is called once per frame
@@ -52,8 +53,9 @@ public class Serpiente : Enemigo
     {
         if (Estados[0].Nombre == EstadosEnemigo.MUERTO)
         {
-            Destroy(gameObject);
             Controlador.Enemigos.Remove(this);
+            Destroy(this.Hitbox);
+            Destroy(gameObject);
         }
     }
 }

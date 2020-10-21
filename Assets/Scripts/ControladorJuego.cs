@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 /**
  * <summary>
@@ -16,6 +17,11 @@ public class ControladorJuego : MonoBehaviour {
     // CONSTANTES
     //public static string RUTA_ESTADOS_PERSONAJE = "Datos/EstadoPersonaje.bin";
     private static int CAPA_ENTIDADES = 8;
+
+    public GameObject hitboxes;
+    public GameObject prefabHitboxPersonaje;
+    public GameObject prefabHitboxEnemigoTamañoNormal;
+    public GameObject prefabHitboxEnemigoTamañoGrande;
 
     /**
     * <summary>
@@ -84,7 +90,7 @@ public class ControladorJuego : MonoBehaviour {
     //public Vector2 DirecciónMovimiento { get => direcciónMovimiento; set => direcciónMovimiento = value; }
     public Personaje Personaje { get => personaje == null ? personaje = GameObject.Find("Personaje").GetComponent<Personaje>() : personaje; set => personaje = value; }
     //public Entidad ObjetivoActual { get => objetivoActual; set => objetivoActual = value; }
-    public Dado D20 { get => d20 == null ? d20 = new Dado(20) : d20 ; set => d20 = value; }
+    public Dado D20 { get => d20 == null ? new Dado(20) : d20; set => d20 = value; }
     public FasesTurno FaseActual { get => faseActual; set => faseActual = value; }
     public List<Enemigo> Enemigos { get => enemigos; set => enemigos = value; }
     public List<GameObject> Mapas { get => mapas; set => mapas = value; }
@@ -335,8 +341,9 @@ public class ControladorJuego : MonoBehaviour {
     /// <summary>
     /// Busca los objetos del inventario del personaje.
     /// </summary>
-    private void obtenerObjetosInventario(ref ObjetoAgarrable[] objetos, ref bool[] estáEquipado, ref int[] cantidades)
+    public void obtenerObjetosInventario(ref ObjetoAgarrable[] objetos, ref bool[] estáEquipado, ref int[] cantidades)
     {
+        //TODO: Esto es una porquería.
         int cantidadObjetos = Personaje.Inventario.Detalle.Count;
         objetos = new ObjetoAgarrable[cantidadObjetos];
         cantidades = new int[cantidadObjetos];
@@ -355,7 +362,7 @@ public class ControladorJuego : MonoBehaviour {
     /// </summary>
     /// <param name="objetivo">Objetivo del ataque.</param>
     /// <returns>Verdadero si el personaje ataca con desventaja.</returns>
-    private bool pjAtacaConDesventajaMelé(Entidad objetivo)
+    public bool pjAtacaConDesventajaMelé(Entidad objetivo)
     {
         bool desventaja = false;
         
@@ -384,14 +391,14 @@ public class ControladorJuego : MonoBehaviour {
     /// Verifica si el personaje tiene ventaja para atacar a melé.
     /// </summary>
     /// <param name="objetivo">Objetivo del ataque.</param>
-    /// <returns>Verdadero si el personaje ataca con desventaja.</returns>
-    private bool pjAtacaConVentajaMelé(Entidad objetivo)
+    /// <returns>Verdadero si el personaje ataca con ventaja.</returns>
+    public bool pjAtacaConVentajaMelé(Entidad objetivo)
     {
         bool ventaja = false;
 
         if (objetivo.esEnemigo())
         {
-            if (!personajeEnEstado(EstadosPersonaje.INVISIBLE))
+            if (personajeEnEstado(EstadosPersonaje.INVISIBLE))
             {
                 ventaja = true;
             }
@@ -481,6 +488,7 @@ public class ControladorJuego : MonoBehaviour {
         Vector2 p2 = posición + new Vector2(0.25f, 0.25f);
         Collider2D collider = Physics2D.OverlapArea(p1, p2);
 
+        // TODO: No tiene en cuenta si un enemigo está sobre la escalera.
         if (collider == null || collider.tag == "Escalera")
         {
             return false;
@@ -501,18 +509,27 @@ public class ControladorJuego : MonoBehaviour {
 
         if (collider != null && collider.tag == "Enemigo")
         {
-            return collider.gameObject.GetComponent<Enemigo>();
+            Enemigo enemigo = Enemigos.Find(e => e.Hitbox.Equals(collider.gameObject));
+
+            return enemigo;
         }
 
         return null;
     }
-
+    
     /// <summary>
-    /// Obtiene una dirección válida de movimiento en función de un 
-    /// número. Se usa para recorrer las posibles direcciones.
+    /// Obtiene una dirección válida de movimiento cuando se utiliza el tamaño 
+    /// <c>TamañoEntidad.NORMAL</c>. Para tamaños más grandes, devuelve todos 
+    /// los vectores que parten desde la posición actual de la entidad, hasta un
+    /// casillero adyacente.
     /// </summary>
+    /// <remarks>
+    /// Este método se usa para recorrer los casilleros adyacentes a las
+    /// entidades, o las direcciones en que se pueden mover.
+    /// </remarks>
     /// <param name="dirección">Entero que representa una dirección.</param>
     /// <returns>Vector con la dirección correspondiente.</returns>
+    [ObsoleteAttribute("Este método es obsoleto. Usar la clase CasillerosVálidos en su lugar.", true)]
     public Vector2 obtenerDirección(int dirección, TamañoEntidad tamaño = TamañoEntidad.NORMAL)
     {
         switch(tamaño)
@@ -587,7 +604,7 @@ public class ControladorJuego : MonoBehaviour {
 
         return Vector2.zero;
     }
-
+    
     /// <summary>
     /// Devuelve una dirección de movimiento aleatoria, que no esté 
     /// obstruida por un enemigo o por el personaje.
@@ -600,6 +617,11 @@ public class ControladorJuego : MonoBehaviour {
     public Vector2 obtenerDirecciónAleatoria(Vector2 posiciónInicio, TamañoEntidad tamaño, bool controlarParedes = false)
     {
         List<Vector2> direcciones = obtenerDireccionesVálidas(posiciónInicio, tamaño, controlarParedes);
+        
+        if (direcciones.Count == 0)
+        {
+            return Vector2.zero;
+        }
 
         return direcciones[UnityEngine.Random.Range(0, direcciones.Count)];
     }
@@ -615,63 +637,44 @@ public class ControladorJuego : MonoBehaviour {
     public List<Vector2> obtenerDireccionesVálidas(Vector2 posiciónInicio, TamañoEntidad tamaño, bool controlarParedes = false)
     {
         List<Vector2> direcciones = new List<Vector2>();
-        List<Vector2> posiciones = new List<Vector2>();
 
-        for (int i = 0; i < 4; i++)
+        foreach (Vector2 dirección in CasillerosVálidos.DireccionesVálidas)
         {
-            posiciones.Clear();
-
-            switch (tamaño)
+            if (esDirecciónVálida(dirección, posiciónInicio, tamaño, controlarParedes))
             {
-                case TamañoEntidad.NORMAL:
-                    Vector2 p = posiciónInicio + obtenerDirección(i);
-                    posiciones.Add(p);
-                    break;
-                case TamañoEntidad.GRANDE:
-                    Vector2 p1 = posiciónInicio + obtenerDirección(i) * 1.5f + new Vector2(obtenerDirección(i).y, obtenerDirección(i).x) * 0.5f;
-                    posiciones.Add(p1);
-                    Vector2 p2 = posiciónInicio + obtenerDirección(i) * 1.5f - new Vector2(obtenerDirección(i).y, obtenerDirección(i).x) * 0.5f;
-                    posiciones.Add(p2);
-                    break;
-                case TamañoEntidad.GIGANTE:
-                    Vector2 p01 = posiciónInicio + obtenerDirección(i) * 2f;
-                    posiciones.Add(p01);
-                    Vector2 p02 = posiciónInicio + obtenerDirección(i) * 2f + new Vector2(obtenerDirección(i).y, obtenerDirección(i).x);
-                    posiciones.Add(p02);
-                    Vector2 p03 = posiciónInicio + obtenerDirección(i) * 2f - new Vector2(obtenerDirección(i).y, obtenerDirección(i).x);
-                    posiciones.Add(p03);
-                    break;
-            }
-
-            bool direcciónVálida = true;
-
-            foreach (Vector2 posición in posiciones)
-            {
-                if (!controlarParedes)
-                {
-                    if (hayEntidadEn(posición))
-                    {
-                        direcciónVálida = false;
-                        break;
-                    }
-                }
-                else
-                {
-                    if (hayObstáculoEn(posición))
-                    {
-                        direcciónVálida = false;
-                        break;
-                    }
-                }
-            }
-
-            if (direcciónVálida)
-            {
-                direcciones.Add(obtenerDirección(i));
+                direcciones.Add(dirección);
             }
         }
 
         return direcciones;
+    }
+
+    public bool esDirecciónVálida(Vector2 dirección, Vector2 posiciónInicio, TamañoEntidad tamaño, bool controlarParedes)
+    {
+        bool esDirecciónVálida = true;
+
+        foreach(Vector2 casilleroRelativo in CasillerosVálidos.CasillerosTamañoNormal[dirección])
+        {
+            Vector2 posición = posiciónInicio + casilleroRelativo;
+            if (!controlarParedes)
+            {
+                if (hayEntidadEn(posición))
+                {
+                    esDirecciónVálida = false;
+                    break;
+                }
+            }
+            else
+            {
+                if (hayObstáculoEn(posición))
+                {
+                    esDirecciónVálida = false;
+                    break;
+                }
+            }
+        }
+
+        return esDirecciónVálida;
     }
 
     /// <summary>
@@ -730,26 +733,14 @@ public class ControladorJuego : MonoBehaviour {
     /// <returns>Verdadero si está adyacente.</returns>
     public bool estáAdyacenteAlPersonaje(Vector2 posición, TamañoEntidad tamaño)
     {
-        int cantidadDirecciones = 0;
-
-        switch (tamaño)
+        foreach (List<Vector2> direcciones in CasillerosVálidos.ObtenerCasillerosVálidos(tamaño).Values)
         {
-            case TamañoEntidad.NORMAL:
-                cantidadDirecciones = 4;
-                break;
-            case TamañoEntidad.GRANDE:
-                cantidadDirecciones = 8;
-                break;
-            case TamañoEntidad.GIGANTE:
-                cantidadDirecciones = 12;
-                break;
-        }
-
-        for (int i = 0; i < cantidadDirecciones; i++)
-        {
-            if (hayPersonajeEn(posición + obtenerDirección(i, tamaño)))
+            foreach(Vector2 dirección in direcciones)
             {
-                return true;
+                if (hayPersonajeEn(posición + dirección))
+                {
+                    return true;
+                }
             }
         }
 
@@ -785,6 +776,26 @@ public class ControladorJuego : MonoBehaviour {
         return false;
         */
     }
+
+    public IEnumerator usarTurnosEnemigos()
+    {
+        foreach (Enemigo e in Enemigos)
+        {
+            e.usarTurno(0);
+
+            //Debug.Log(e.gameObject.name);
+
+            yield return null;
+        }
+
+        while (Enemigos.Last().SeEstáMoviendo)
+        {
+            yield return null;
+        }
+
+        FaseActual = FasesTurno.TURNO_PERSONAJE;
+    }
+
 
     // ANIMACIONES
     /// <summary>
@@ -847,10 +858,12 @@ public class ControladorJuego : MonoBehaviour {
         // Inicializo cicloTurno en el turno del personaje
         FaseActual = FasesTurno.TURNO_PERSONAJE;
 
-        Mapas = new List<GameObject>();
-        Mapas.Add(GameObject.Find("Nivel 1"));
-        Mapas.Add(GameObject.Find("Nivel 2"));
-        Mapas.Add(GameObject.Find("Nivel 3"));
+        Mapas = new List<GameObject>
+        {
+            GameObject.Find("Nivel 1"),
+            GameObject.Find("Nivel 2"),
+            GameObject.Find("Nivel 3")
+        };
 
         MapaActual = 0;
         Mapas[1].SetActive(false);
@@ -876,6 +889,34 @@ public class ControladorJuego : MonoBehaviour {
         D20 = new Dado(20);
 
         JuegoEnPausa = false;
+
+        // Creo la hitbox del personaje.
+        GameObject hitboxPersonaje = Instantiate(prefabHitboxPersonaje,
+            Personaje.transform.position,
+            Quaternion.identity,
+            hitboxes.transform);
+        Personaje.Hitbox = hitboxPersonaje;
+
+        // Creo las hitbox de los enemigos.
+        Enemigos.ForEach(e => {
+            GameObject hitbox;
+
+            if (e.Tamaño == TamañoEntidad.NORMAL)
+            {
+                hitbox = Instantiate(prefabHitboxEnemigoTamañoNormal,
+                    e.transform.position,
+                    Quaternion.identity,
+                    hitboxes.transform);
+            } else
+            {
+                hitbox = Instantiate(prefabHitboxEnemigoTamañoGrande,
+                    e.transform.position,
+                    Quaternion.identity,
+                    hitboxes.transform);
+            }
+
+            e.Hitbox = hitbox;
+        });
     }
 
     // Update is called once per frame
@@ -897,14 +938,14 @@ public class ControladorJuego : MonoBehaviour {
 
             //    break;
             case FasesTurno.TURNO_ENEMIGOS:
-                Enemigos.ForEach((enemigo) => enemigo.usarTurno(0));
+                StartCoroutine(usarTurnosEnemigos());
 
-                FaseActual = FasesTurno.TURNO_PERSONAJE;
+                FaseActual = FasesTurno.ESPERANDO_ANIMACIONES_ENEMIGOS;
 
                 break;
 
             //case FasesTurno.ESPERANDO_ANIMACIONES_ENEMIGOS:
-            //    if (!Pantalla.AnimaciónEnProgreso)
+            //    if (!Enemigos.First().SeEstáMoviendo && !Enemigos.Last().SeEstáMoviendo)
             //    {
             //        FaseActual = FasesTurno.TURNO_PERSONAJE;
             //    }

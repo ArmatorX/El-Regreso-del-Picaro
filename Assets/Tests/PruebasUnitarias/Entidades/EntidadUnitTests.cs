@@ -14,7 +14,8 @@ namespace Tests
         [SetUp]
         public void SetUp()
         {
-            GameObject controlador = new GameObject("ControladorJuego");
+            ControladorJuego controlador = new GameObject("ControladorJuego").AddComponent<ControladorJuego>();
+
             entidad = new GameObject().AddComponent<EntidadPruebas>();
             entidad.VidaActual = 20;
             

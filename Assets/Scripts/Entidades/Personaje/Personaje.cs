@@ -62,9 +62,9 @@ public class Personaje : Entidad
     public List<EstadoPersonaje> Estados { get => estados; set => estados = value; }
     public Equipo EquipoActual { get => equipoActual; set => equipoActual = value; }
     public Nivel NivelActual { get => nivelActual; set => nivelActual = value; }
-    public Rigidbody2D RB { get => rb == null ? rb = GetComponent<Rigidbody2D>() : rb; set => rb = value; }
-    public Animator Animaciones { get => animaciones == null ? animaciones = GetComponent<Animator>() : animaciones; set => animaciones = value; }
-    public Inventario Inventario { get => inventario == null ? inventario = new Inventario() : inventario; set => inventario = value; }
+    public Rigidbody2D RB { get => rb == null ? GetComponent<Rigidbody2D>() : rb; set => rb = value; }
+    public Animator Animaciones { get => animaciones == null ? GetComponent<Animator>() : animaciones; set => animaciones = value; }
+    public Inventario Inventario { get => inventario == null ? new Inventario() : inventario; set => inventario = value; }
 
     /**
      * <summary>
@@ -81,12 +81,13 @@ public class Personaje : Entidad
         // Consumo los puntos de comida del movimiento.
         consumirComida(COMIDA_MOVIMIENTO);
 
-        moverManiquí(dirección);
+        // Mueve la hitbox.
+        moverHitbox(dirección);
 
         // Muestro la animación del movimiento del personaje.
         Controlador.animaciónMovimientoPersonaje(dirección);
     }
-
+    /*
     /// <summary>
     /// Crea un maniquí. Evita que los enemigos elijan el mismo casillero de 
     /// destino que el personaje.
@@ -115,6 +116,7 @@ public class Personaje : Entidad
     {
         Maniquí.transform.position += (Vector3) dirección;
     }
+    */
 
     /**
      * <summary>
@@ -443,8 +445,10 @@ public class Personaje : Entidad
         ModificadorVidaMáxima = 0;
         ComidaActual = 100;
         ExperienciaActual = 0;
-        Estados = new List<EstadoPersonaje>();
-        Estados.Add(new EstadoPersonaje(EstadosPersonaje.NORMAL));
+        Estados = new List<EstadoPersonaje>
+        {
+            new EstadoPersonaje(EstadosPersonaje.NORMAL)
+        };
 
         Ubicación = new Piso(this.transform.position);
 
@@ -483,7 +487,7 @@ public class Personaje : Entidad
         //Inventario.Detalle.Add(new DetalleInventario(1, pociónVida));
         */
 
-        crearManiquí();
+        //crearManiquí();
     }
 
     // Update is called once per frame
@@ -491,8 +495,9 @@ public class Personaje : Entidad
     {
         if (Estados[0].Nombre == EstadosPersonaje.MUERTO)
         {
-            Destroy(gameObject);
             Controlador.Personaje = null;
+            Destroy(this.Hitbox);
+            Destroy(gameObject);
         }
     }
 }

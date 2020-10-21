@@ -97,7 +97,7 @@ public abstract class Enemigo : Entidad
         {
             Vector2 dirección = elegirDirecciónMovimiento();
 
-            if (dirección != null)
+            if (dirección != Vector2.zero)
             {
                 moverse(dirección);
             }
@@ -133,7 +133,8 @@ public abstract class Enemigo : Entidad
 
     public override void moverse(Vector2 dirección)
     {
-        moverManiquí(dirección);
+        moverHitbox(dirección);
+
         Controlador.animaciónMovimientoEnemigo(this, dirección);
         //crearManiquí(dirección);
     }
@@ -147,6 +148,7 @@ public abstract class Enemigo : Entidad
         return DadoDañoAtaqueBase.tirarDados(CantidadDadosDañoAtaqueBase);
     }
 
+    /*
     /// <summary>
     /// Crea un maniquí. Evita que dos enemigos 
     /// elijan el mismo casillero como destino.
@@ -166,6 +168,7 @@ public abstract class Enemigo : Entidad
         hitbox.size = new Vector2(0.16f, 0.16f);
     }
     
+    
     /// <summary>
     /// Mueve el maniquí en la dirección de movimiento. Evita que dos enemigos 
     /// elijan el mismo casillero como destino.
@@ -175,6 +178,7 @@ public abstract class Enemigo : Entidad
     {
         Maniquí.transform.position += (Vector3)dirección;
     }
+    */
 
     /// <summary>
     /// Verifica si el enemigo se encuentra en un casillero adyacente al 

@@ -23,14 +23,14 @@ namespace Tests
             personaje = personajeGO.AddComponent<Personaje>();
             personaje.RB = personajeGO.AddComponent<Rigidbody2D>();
             personaje.Animaciones = personajeGO.AddComponent<Animator>();
-
+            /*
             personaje.Maniquí = new GameObject("Maniquí");
             personaje.Maniquí.tag = "Player";
             personaje.Maniquí.transform.localScale = new Vector3(6.25f, 6.25f, 1);
             personaje.Maniquí.transform.position = personaje.transform.position;
             BoxCollider2D hitbox = personaje.Maniquí.AddComponent<BoxCollider2D>();
             hitbox.size = new Vector2(0.16f, 0.16f);
-
+            */
             personaje.transform.position = Vector3.zero;
 
             personaje.ComidaActual = 20;
@@ -155,6 +155,7 @@ namespace Tests
             Assert.AreEqual(estadoEsperado, estadoReal);
         }
         */
+        /*
         [Test]
         public void Personaje_crearManiquí_CreaObjetoDelTipoGameObject()
         {
@@ -234,7 +235,7 @@ namespace Tests
 
             Assert.AreEqual(valorEsperado, valorReal);
         }
-
+        */  
         [Test]
         public void Personaje_consumirComida_RestaComidaPersonaje()
         {

@@ -85,13 +85,5 @@ namespace Tests
 
             Assert.AreEqual(secuenciaEsperada, secuenciaObtenida);
         }
-        /*
-        public void Troll_puntajeF_DevuelveValorCorrecto()
-        {
-
-            float valorEsperado = ;
-            float valorObtenido = puntajeF(x, destino, )
-        }
-        */
     }
 }
