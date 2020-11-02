@@ -483,7 +483,7 @@ public class PantallaJuego : MonoBehaviour
     {
         AnimaciónEnProgreso = false;
 
-        if (!Controlador.ModoTest)
+        if (!Controlador.ModoTest && GameObject.Find("Murciélago (2)") != null)
         {
             InventarioGUI.SetActive(false);
         }

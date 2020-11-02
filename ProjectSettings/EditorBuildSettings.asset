@@ -5,7 +5,13 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
+  - enabled: 0
+    path: 
+    guid: 00000000000000000000000000000000
   - enabled: 1
-    path: Assets/Scenes/SampleScene.unity
-    guid: 2cda990e2423bbf4892e6590ba056729
+    path: Assets/_Scenes/Bug_OverlappedEnemies.unity
+    guid: 4e231a55e511d4e40b20b596d9f38724
+  - enabled: 1
+    path: Assets/_Scenes/Juego.unity
+    guid: 1d04305563b8adf4c9d02c2444faa00d
   m_configObjects: {}
