@@ -84,6 +84,7 @@ public class ControladorJuego : MonoBehaviour {
     private List<Enemigo> enemigos;
     private GameObject escaleraActual;
     private bool juegoEnPausa;
+    private bool modoTest = false;
 
     // GETTERS Y SETTERS
     public PantallaJuego Pantalla { get => pantalla == null ? pantalla = GameObject.Find("PantallaJuego").GetComponent<PantallaJuego>() : pantalla; set => pantalla = value; }
@@ -97,6 +98,8 @@ public class ControladorJuego : MonoBehaviour {
     public int MapaActual { get => mapaActual; set => mapaActual = value; }
     public GameObject EscaleraActual { get => escaleraActual == null ? escaleraActual = GameObject.Find("Escalera") : escaleraActual; set => escaleraActual = value; }
     public bool JuegoEnPausa { get => juegoEnPausa; set => juegoEnPausa = value; }
+    public bool ModoTest { get => modoTest; set => modoTest = value; }
+
 
     // CASOS DE USO
     /// <summary>
@@ -858,105 +861,113 @@ public class ControladorJuego : MonoBehaviour {
         // Inicializo cicloTurno en el turno del personaje
         FaseActual = FasesTurno.TURNO_PERSONAJE;
 
-        Mapas = new List<GameObject>
+        if (!ModoTest)
         {
-            GameObject.Find("Nivel 1"),
-            GameObject.Find("Nivel 2"),
-            GameObject.Find("Nivel 3")
-        };
+            Mapas = new List<GameObject>
+            {
+                GameObject.Find("Nivel 1"),
+                GameObject.Find("Nivel 2"),
+                GameObject.Find("Nivel 3")
+            };
 
-        MapaActual = 0;
-        Mapas[1].SetActive(false);
-        Mapas[2].SetActive(false);
+            MapaActual = 0;
+            Mapas[1].SetActive(false);
+            Mapas[2].SetActive(false);
 
-        // Creo los enemigos
-        Enemigos = new List<Enemigo>();
-        Enemigos.Add(GameObject.Find("Murciélago (1)").GetComponent<Murciélago>());
-        Enemigos.Add(GameObject.Find("Murciélago (2)").GetComponent<Murciélago>());
-        Enemigos.Add(GameObject.Find("Murciélago (3)").GetComponent<Murciélago>());
-        Enemigos.Add(GameObject.Find("Murciélago (4)").GetComponent<Murciélago>());
-        Enemigos.Add(GameObject.Find("Murciélago (5)").GetComponent<Murciélago>());
-        Enemigos.Add(GameObject.Find("Murciélago (6)").GetComponent<Murciélago>());
-        Enemigos.Add(GameObject.Find("Serpiente (1)").GetComponent<Serpiente>());
-        Enemigos.Add(GameObject.Find("Serpiente (2)").GetComponent<Serpiente>());
-        Enemigos.Add(GameObject.Find("Serpiente (3)").GetComponent<Serpiente>());
-        Enemigos.Add(GameObject.Find("Serpiente (4)").GetComponent<Serpiente>());
-        Enemigos.Add(GameObject.Find("Serpiente (5)").GetComponent<Serpiente>());
-        Enemigos.Add(GameObject.Find("Serpiente (6)").GetComponent<Serpiente>());
-        Enemigos.Add(GameObject.Find("Serpiente (7)").GetComponent<Serpiente>());
-        Enemigos.Add(GameObject.Find("Troll").GetComponent<Troll>());
+            // Creo los enemigos
+            Enemigos = new List<Enemigo>();
+            Enemigos.Add(GameObject.Find("Murciélago (1)").GetComponent<Murciélago>());
+            Enemigos.Add(GameObject.Find("Murciélago (2)").GetComponent<Murciélago>());
+            Enemigos.Add(GameObject.Find("Murciélago (3)").GetComponent<Murciélago>());
+            Enemigos.Add(GameObject.Find("Murciélago (4)").GetComponent<Murciélago>());
+            Enemigos.Add(GameObject.Find("Murciélago (5)").GetComponent<Murciélago>());
+            Enemigos.Add(GameObject.Find("Murciélago (6)").GetComponent<Murciélago>());
+            Enemigos.Add(GameObject.Find("Serpiente (1)").GetComponent<Serpiente>());
+            Enemigos.Add(GameObject.Find("Serpiente (2)").GetComponent<Serpiente>());
+            Enemigos.Add(GameObject.Find("Serpiente (3)").GetComponent<Serpiente>());
+            Enemigos.Add(GameObject.Find("Serpiente (4)").GetComponent<Serpiente>());
+            Enemigos.Add(GameObject.Find("Serpiente (5)").GetComponent<Serpiente>());
+            Enemigos.Add(GameObject.Find("Serpiente (6)").GetComponent<Serpiente>());
+            Enemigos.Add(GameObject.Find("Serpiente (7)").GetComponent<Serpiente>());
+            Enemigos.Add(GameObject.Find("Troll").GetComponent<Troll>());
+
+            // Creo la hitbox del personaje.
+            GameObject hitboxPersonaje = Instantiate(prefabHitboxPersonaje,
+                Personaje.transform.position,
+                Quaternion.identity,
+                hitboxes.transform);
+            Personaje.Hitbox = hitboxPersonaje;
+
+            // Creo las hitbox de los enemigos.
+            Enemigos.ForEach(e =>
+            {
+                GameObject hitbox;
+
+                if (e.Tamaño == TamañoEntidad.NORMAL)
+                {
+                    hitbox = Instantiate(prefabHitboxEnemigoTamañoNormal,
+                        e.transform.position,
+                        Quaternion.identity,
+                        hitboxes.transform);
+                }
+                else
+                {
+                    hitbox = Instantiate(prefabHitboxEnemigoTamañoGrande,
+                        e.transform.position,
+                        Quaternion.identity,
+                        hitboxes.transform);
+                }
+
+                e.Hitbox = hitbox;
+            });
+        }
 
         D20 = new Dado(20);
 
         JuegoEnPausa = false;
-
-        // Creo la hitbox del personaje.
-        GameObject hitboxPersonaje = Instantiate(prefabHitboxPersonaje,
-            Personaje.transform.position,
-            Quaternion.identity,
-            hitboxes.transform);
-        Personaje.Hitbox = hitboxPersonaje;
-
-        // Creo las hitbox de los enemigos.
-        Enemigos.ForEach(e => {
-            GameObject hitbox;
-
-            if (e.Tamaño == TamañoEntidad.NORMAL)
-            {
-                hitbox = Instantiate(prefabHitboxEnemigoTamañoNormal,
-                    e.transform.position,
-                    Quaternion.identity,
-                    hitboxes.transform);
-            } else
-            {
-                hitbox = Instantiate(prefabHitboxEnemigoTamañoGrande,
-                    e.transform.position,
-                    Quaternion.identity,
-                    hitboxes.transform);
-            }
-
-            e.Hitbox = hitbox;
-        });
     }
 
     // Update is called once per frame
     void FixedUpdate()
     {
-        switch (FaseActual)
+        if (!ModoTest)
         {
-            //case FasesTurno.INICIALIZACIÓN:
-
-            //    break;
-            //case FasesTurno.TURNO_PERSONAJE:
-
-            //    break;
-            //case FasesTurno.ESPERANDO_ANIMACIONES_PERSONAJE:
-            //    if (!Pantalla.AnimaciónEnProgreso)
-            //    {
-            //        FaseActual = FasesTurno.TURNO_ENEMIGOS;
-            //    }
-
-            //    break;
-            case FasesTurno.TURNO_ENEMIGOS:
-                StartCoroutine(usarTurnosEnemigos());
-
-                FaseActual = FasesTurno.ESPERANDO_ANIMACIONES_ENEMIGOS;
-
-                break;
-
-            //case FasesTurno.ESPERANDO_ANIMACIONES_ENEMIGOS:
-            //    if (!Enemigos.First().SeEstáMoviendo && !Enemigos.Last().SeEstáMoviendo)
-            //    {
-            //        FaseActual = FasesTurno.TURNO_PERSONAJE;
-            //    }
-
-            //    break;
-                //case FasesTurno.EFECTOS_ESTADOS_ALTERADOS:
+            switch (FaseActual)
+            {
+                //case FasesTurno.INICIALIZACIÓN:
 
                 //    break;
-                //case FasesTurno.REPOSICIÓN_ENEMIGOS:
+                //case FasesTurno.TURNO_PERSONAJE:
 
                 //    break;
+                //case FasesTurno.ESPERANDO_ANIMACIONES_PERSONAJE:
+                //    if (!Pantalla.AnimaciónEnProgreso)
+                //    {
+                //        FaseActual = FasesTurno.TURNO_ENEMIGOS;
+                //    }
+
+                //    break;
+                case FasesTurno.TURNO_ENEMIGOS:
+                    StartCoroutine(usarTurnosEnemigos());
+
+                    FaseActual = FasesTurno.ESPERANDO_ANIMACIONES_ENEMIGOS;
+
+                    break;
+
+                    //case FasesTurno.ESPERANDO_ANIMACIONES_ENEMIGOS:
+                    //    if (!Enemigos.First().SeEstáMoviendo && !Enemigos.Last().SeEstáMoviendo)
+                    //    {
+                    //        FaseActual = FasesTurno.TURNO_PERSONAJE;
+                    //    }
+
+                    //    break;
+                    //case FasesTurno.EFECTOS_ESTADOS_ALTERADOS:
+
+                    //    break;
+                    //case FasesTurno.REPOSICIÓN_ENEMIGOS:
+
+                    //    break;
+            }
         }
     }
 }
