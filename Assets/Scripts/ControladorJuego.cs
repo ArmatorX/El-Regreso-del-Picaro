@@ -871,25 +871,36 @@ public class ControladorJuego : MonoBehaviour {
             };
 
             MapaActual = 0;
-            Mapas[1].SetActive(false);
-            Mapas[2].SetActive(false);
+            if (Mapas[1] != null)
+            {
+                Mapas[1].SetActive(false);
+            }
+
+            if (Mapas[2] != null)
+            {
+                Mapas[2].SetActive(false);
+            }
 
             // Creo los enemigos
             Enemigos = new List<Enemigo>();
             Enemigos.Add(GameObject.Find("Murciélago (1)").GetComponent<Murciélago>());
-            Enemigos.Add(GameObject.Find("Murciélago (2)").GetComponent<Murciélago>());
-            Enemigos.Add(GameObject.Find("Murciélago (3)").GetComponent<Murciélago>());
-            Enemigos.Add(GameObject.Find("Murciélago (4)").GetComponent<Murciélago>());
-            Enemigos.Add(GameObject.Find("Murciélago (5)").GetComponent<Murciélago>());
-            Enemigos.Add(GameObject.Find("Murciélago (6)").GetComponent<Murciélago>());
             Enemigos.Add(GameObject.Find("Serpiente (1)").GetComponent<Serpiente>());
-            Enemigos.Add(GameObject.Find("Serpiente (2)").GetComponent<Serpiente>());
-            Enemigos.Add(GameObject.Find("Serpiente (3)").GetComponent<Serpiente>());
-            Enemigos.Add(GameObject.Find("Serpiente (4)").GetComponent<Serpiente>());
-            Enemigos.Add(GameObject.Find("Serpiente (5)").GetComponent<Serpiente>());
-            Enemigos.Add(GameObject.Find("Serpiente (6)").GetComponent<Serpiente>());
-            Enemigos.Add(GameObject.Find("Serpiente (7)").GetComponent<Serpiente>());
-            Enemigos.Add(GameObject.Find("Troll").GetComponent<Troll>());
+
+            if (GameObject.Find("Murciélago (2)") != null)
+            {
+                Enemigos.Add(GameObject.Find("Murciélago (2)").GetComponent<Murciélago>());
+                Enemigos.Add(GameObject.Find("Murciélago (3)").GetComponent<Murciélago>());
+                Enemigos.Add(GameObject.Find("Murciélago (4)").GetComponent<Murciélago>());
+                Enemigos.Add(GameObject.Find("Murciélago (5)").GetComponent<Murciélago>());
+                Enemigos.Add(GameObject.Find("Murciélago (6)").GetComponent<Murciélago>());
+                Enemigos.Add(GameObject.Find("Serpiente (2)").GetComponent<Serpiente>());
+                Enemigos.Add(GameObject.Find("Serpiente (3)").GetComponent<Serpiente>());
+                Enemigos.Add(GameObject.Find("Serpiente (4)").GetComponent<Serpiente>());
+                Enemigos.Add(GameObject.Find("Serpiente (5)").GetComponent<Serpiente>());
+                Enemigos.Add(GameObject.Find("Serpiente (6)").GetComponent<Serpiente>());
+                Enemigos.Add(GameObject.Find("Serpiente (7)").GetComponent<Serpiente>());
+                Enemigos.Add(GameObject.Find("Troll").GetComponent<Troll>());
+            }
 
             // Creo la hitbox del personaje.
             GameObject hitboxPersonaje = Instantiate(prefabHitboxPersonaje,
@@ -897,7 +908,7 @@ public class ControladorJuego : MonoBehaviour {
                 Quaternion.identity,
                 hitboxes.transform);
             Personaje.Hitbox = hitboxPersonaje;
-
+            
             // Creo las hitbox de los enemigos.
             Enemigos.ForEach(e =>
             {
