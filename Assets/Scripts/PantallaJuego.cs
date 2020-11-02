@@ -482,28 +482,35 @@ public class PantallaJuego : MonoBehaviour
     void Start()
     {
         AnimaciónEnProgreso = false;
-        InventarioGUI.SetActive(false);
+
+        if (!Controlador.ModoTest)
+        {
+            InventarioGUI.SetActive(false);
+        }
     }
 
     void Update()
     {
-        if (Personaje.Animaciones.GetInteger("estado") == 0)
+        if (!Controlador.ModoTest)
         {
-            if (Input.anyKeyDown)
+            if (Personaje.Animaciones.GetInteger("estado") == 0)
             {
-                Vector2 dirección = obtenerDirecciónMovimiento();
+                if (Input.anyKeyDown)
+                {
+                    Vector2 dirección = obtenerDirecciónMovimiento();
 
-                if (dirección != Vector2.zero)
-                {
-                    moverPersonaje(dirección);
-                }
-                else if (Input.GetButtonDown("BajarEscalera"))
-                {
-                    bajarEscaleras();
-                }
-                else if (Input.GetButtonDown("MostrarInventario"))
-                {
-                    mostrarInventario();
+                    if (dirección != Vector2.zero)
+                    {
+                        moverPersonaje(dirección);
+                    }
+                    else if (Input.GetButtonDown("BajarEscalera"))
+                    {
+                        bajarEscaleras();
+                    }
+                    else if (Input.GetButtonDown("MostrarInventario"))
+                    {
+                        mostrarInventario();
+                    }
                 }
             }
         }
